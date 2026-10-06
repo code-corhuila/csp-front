@@ -24,6 +24,14 @@ module.exports = tseslint.config(
     },
   },
   {
+    // main.ts runs before initFederation installs the import map: a static import of
+    // an Angular package here leaves the shell blank ("Unable to resolve specifier").
+    files: ['src/main.ts'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: ['@angular/*'] }],
+    },
+  },
+  {
     files: ['**/*.html'],
     languageOptions: {
       parser: angularESLintTemplateParser,

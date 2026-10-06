@@ -1,10 +1,6 @@
-import { InjectionToken } from '@angular/core';
-
 export interface RuntimeConfig {
   readonly gatewayUrl: string;
 }
-
-export const RUNTIME_CONFIG = new InjectionToken<RuntimeConfig>('RUNTIME_CONFIG');
 
 const CONFIG_PATH = 'config.json';
 

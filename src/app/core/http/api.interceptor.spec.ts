@@ -2,7 +2,7 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SessionService } from '../auth/session.service';
-import { RUNTIME_CONFIG } from '../config/runtime-config';
+import { RUNTIME_CONFIG } from '../config/runtime-config.token';
 import { ApiError } from './api-error';
 import { apiInterceptor } from './api.interceptor';
 
