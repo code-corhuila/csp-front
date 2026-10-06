@@ -1,0 +1,7 @@
+{
+  "auth": "http://localhost:4201/remoteEntry.json",
+  "booking": "http://localhost:4202/remoteEntry.json",
+  "catalog": "http://localhost:4203/remoteEntry.json",
+  "concessions": "http://localhost:4204/remoteEntry.json",
+  "ticketing": "http://localhost:4205/remoteEntry.json"
+}
