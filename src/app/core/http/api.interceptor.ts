@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError, timeout, TimeoutError } from 'rxjs';
 import { SessionService } from '../auth/session.service';
-import { RUNTIME_CONFIG } from '../config/runtime-config';
+import { RUNTIME_CONFIG } from '../config/runtime-config.token';
 import { toApiError } from './api-error';
 
 const TIMEOUT_MS = 10_000;
