@@ -2,9 +2,9 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError, timeout, TimeoutError } from 'rxjs';
 import { SessionService } from '../auth/session.service';
+import { RUNTIME_CONFIG } from '../config/runtime-config';
 import { toApiError } from './api-error';
 
-const GATEWAY_URL = 'http://localhost:8000';
 const TIMEOUT_MS = 10_000;
 
 /**
@@ -14,11 +14,12 @@ const TIMEOUT_MS = 10_000;
  */
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   if (!req.url.startsWith('/api/')) return next(req);
+  const { gatewayUrl } = inject(RUNTIME_CONFIG);
   const session = inject(SessionService);
   const correlationId = crypto.randomUUID();
   const token = session.token();
   const outgoing = req.clone({
-    url: GATEWAY_URL + req.url,
+    url: gatewayUrl + req.url,
     setHeaders: {
       'X-Correlation-Id': correlationId,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

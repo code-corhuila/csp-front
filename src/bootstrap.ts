@@ -1,5 +1,8 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './app/app.component';
-import { appConfig } from './app/app.config';
+import { buildAppConfig } from './app/app.config';
+import { RuntimeConfig } from './app/core/config/runtime-config';
 
-bootstrapApplication(AppComponent, appConfig).catch((err) => console.error(err));
+export function bootstrap(config: RuntimeConfig): Promise<unknown> {
+  return bootstrapApplication(AppComponent, buildAppConfig(config));
+}
