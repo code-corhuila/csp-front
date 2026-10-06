@@ -1,7 +1,18 @@
 import { loadRemoteModule } from '@angular-architects/native-federation';
-import { Routes } from '@angular/router';
+import { isDevMode } from '@angular/core';
+import { Route, Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { remoteUnavailable } from './core/errors/remote-unavailable.component';
+
+/**
+ * The paste-a-token sign-in exists only in development (ADR-022); any other
+ * build sends the same address to the identity portal's login.
+ */
+export const signInRoute = (devMode: boolean): Route =>
+  devMode
+    ? { path: 'sign-in', title: 'Sign in', loadComponent: () =>
+        import('./core/auth/sign-in.component').then((m) => m.SignInComponent) }
+    : { path: 'sign-in', redirectTo: 'auth/login' };
 
 /**
  * One entry per domain portal, mounted where csp-docs/12-ux-ui/navigation-map.md
@@ -10,8 +21,7 @@ import { remoteUnavailable } from './core/errors/remote-unavailable.component';
 export const routes: Routes = [
   { path: '', pathMatch: 'full', title: 'Home', loadComponent: () =>
       import('./layout/home.component').then((m) => m.HomeComponent) },
-  { path: 'sign-in', title: 'Sign in', loadComponent: () =>
-      import('./core/auth/sign-in.component').then((m) => m.SignInComponent) },
+  signInRoute(isDevMode()),
   // A portal that cannot be loaded — down, or being deployed — shows its own
   // error; the shell and every other portal keep working.
   {
