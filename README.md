@@ -11,6 +11,10 @@ The shell owns everything that must exist **exactly once**: the single `HttpClie
 interceptor, the session and the gateway URL. Domain portals are loaded as routes inside the
 shell's injector and never call `provideHttpClient()`.
 
+## Visual identity
+
+The tokens, buttons and logos in `src/styles.css` and `public/assets/logos/` come from `csp-docs/12-ux-ui/design-system.md` (HU-UI-001).
+
 ## Remotes and ports
 
 The host runs on port `4200`. Each portal is registered in `public/federation.manifest.json`.
