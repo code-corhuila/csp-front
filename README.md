@@ -31,6 +31,10 @@ The host runs on port `4200`. Each portal is registered in `public/federation.ma
 The `catalog` portal is mounted at the root of the shell: `/` is its billboard, and its absolute
 links (`/movies/:id`, `/showtimes/:id/seats`) resolve inside it. The shell has no home page of its own.
 
+Signing in through the auth portal opens the protected routes (`/booking`, `/dashboard`,
+`/admin/concessions`) while the portals show synthetic data; the development token of `/sign-in`
+opens them too. Neither is real security yet: there are no tokens validated and no role checks.
+
 ## Per-environment configuration
 
 The image is built once and the same image is promoted from one environment to the next. What
