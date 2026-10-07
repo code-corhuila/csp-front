@@ -1,7 +1,7 @@
 import { loadRemoteModule } from '@angular-architects/native-federation';
 import { isDevMode } from '@angular/core';
 import { Route, Routes } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
+import { authGuard, roleGuard } from './core/auth/auth.guard';
 import { remoteUnavailable } from './core/errors/remote-unavailable.component';
 
 /**
@@ -30,6 +30,17 @@ export const routes: Routes = [
         .then((m) => m.AUTH_ROUTES)
         .catch((err) => remoteUnavailable('Authentication', err)),
   },
+  // The customer step of the purchase flow belongs to the concessions portal (ADR-027). Its address
+  // is under /booking, so it is declared before the booking portal, which owns the prefix.
+  {
+    path: 'booking/snack-selection',
+    title: 'Snacks',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      loadRemoteModule('concessions', './snack-routes')
+        .then((m) => m.SNACK_ROUTES)
+        .catch((err) => remoteUnavailable('Snacks', err)),
+  },
   {
     path: 'booking',
     title: 'Booking',
@@ -51,7 +62,7 @@ export const routes: Routes = [
   {
     path: 'admin/concessions',
     title: 'Concessions',
-    canActivate: [authGuard],
+    canActivate: [roleGuard('ADMIN')],
     loadChildren: () =>
       loadRemoteModule('concessions', './routes')
         .then((m) => m.CONCESSIONS_ROUTES)

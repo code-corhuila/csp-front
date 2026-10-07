@@ -5,10 +5,16 @@ import { PortalSession, SessionService } from './session.service';
 class FakePortalSession implements PortalSession {
   private readonly open = signal(false);
   readonly isAuthenticated = this.open.asReadonly();
+  private roles: string[] = [];
   readonly end = jasmine.createSpy('end').and.callFake(() => this.open.set(false));
 
-  start(): void {
+  start(...roles: string[]): void {
+    this.roles = roles;
     this.open.set(true);
+  }
+
+  hasRole(role: string): boolean {
+    return this.open() && this.roles.includes(role);
   }
 }
 
@@ -50,6 +56,31 @@ describe('SessionService', () => {
 
     expect(session.isAuthenticated()).toBeTrue();
     expect(session.token()).toBeNull();
+  });
+
+  it('has the roles the auth portal session has', async () => {
+    const portal = new FakePortalSession();
+    const session = TestBed.inject(SessionService);
+    await session.connect(() => Promise.resolve(portal));
+
+    expect(session.hasRole('CLIENT')).toBeFalse();
+
+    portal.start('CLIENT');
+
+    expect(session.hasRole('CLIENT')).toBeTrue();
+    expect(session.hasRole('ADMIN')).toBeFalse();
+  });
+
+  it('counts the development token as every role, for development only', () => {
+    const session = TestBed.inject(SessionService);
+    session.set('abc');
+
+    expect(session.hasRole('ADMIN')).toBeTrue();
+    expect(session.hasRole('CLIENT')).toBeTrue();
+  });
+
+  it('has no role without a session', () => {
+    expect(TestBed.inject(SessionService).hasRole('CLIENT')).toBeFalse();
   });
 
   it('keeps working with the token alone when the auth portal cannot be reached', async () => {

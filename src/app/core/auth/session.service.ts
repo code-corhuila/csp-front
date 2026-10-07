@@ -5,6 +5,7 @@ const KEY = 'csp.session.token';
 /** What the shell needs from the session the auth portal keeps in memory. */
 export interface PortalSession {
   isAuthenticated(): boolean;
+  hasRole(role: string): boolean;
   end(): void;
 }
 
@@ -22,6 +23,14 @@ export class SessionService {
   readonly isAuthenticated = computed(
     () => this.tokenSignal() !== null || (this.portalSession()?.isAuthenticated() ?? false),
   );
+
+  /**
+   * The roles come from the auth portal session. The development token carries no claims, so it
+   * counts as every role: that is a development convenience, not authorization.
+   */
+  hasRole(role: string): boolean {
+    return this.tokenSignal() !== null || (this.portalSession()?.hasRole(role) ?? false);
+  }
 
   /** A portal that cannot be reached must not stop the shell: it keeps the token alone. */
   async connect(load: () => Promise<PortalSession>): Promise<void> {
