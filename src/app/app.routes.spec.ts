@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { routes } from './app.routes';
+import { routes, signInRoute } from './app.routes';
 import { SessionService } from './core/auth/session.service';
 
 describe('routes', () => {
@@ -43,5 +43,11 @@ describe('routes', () => {
     await harness.navigateByUrl('/');
 
     expect(harness.routeNativeElement?.textContent).toContain('Cinesync Platform');
+  });
+
+  it('mounts the token sign-in only in development', () => {
+    expect(signInRoute(true).loadComponent).toBeDefined();
+    expect(signInRoute(false).loadComponent).toBeUndefined();
+    expect(signInRoute(false).redirectTo).toBe('auth/login');
   });
 });

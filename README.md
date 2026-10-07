@@ -24,7 +24,24 @@ The host runs on port `4200`. Each portal is registered in `public/federation.ma
 | `concessions` | `csp-concessions-portal` | 4204 |
 | `ticketing` | `csp-ticketing-portal` | 4205 |
 
-The gateway URL (`http://localhost:8000`) is set only in `src/app/core/http/api.interceptor.ts`.
+## Per-environment configuration
+
+The image is built once and the same image is promoted from one environment to the next. What
+changes per environment comes from the container environment, which renders `config.json`,
+`federation.manifest.json` and the CORS rule when the container starts. The container refuses to
+start if a variable is missing. For `npm start`, `public/config.json` and
+`public/federation.manifest.json` hold the development values. The shell reads `config.json`
+before anything else and does not start without a `gatewayUrl`.
+
+| Variable | Meaning | Development value |
+|---|---|---|
+| `GATEWAY_URL` | Gateway base URL used by the interceptor | `http://localhost:8000` |
+| `AUTH_REMOTE_URL` | `remoteEntry.json` of the auth portal | `http://localhost:4201/remoteEntry.json` |
+| `BOOKING_REMOTE_URL` | `remoteEntry.json` of the booking portal | `http://localhost:4202/remoteEntry.json` |
+| `CATALOG_REMOTE_URL` | `remoteEntry.json` of the catalog portal | `http://localhost:4203/remoteEntry.json` |
+| `CONCESSIONS_REMOTE_URL` | `remoteEntry.json` of the concessions portal | `http://localhost:4204/remoteEntry.json` |
+| `TICKETING_REMOTE_URL` | `remoteEntry.json` of the ticketing portal | `http://localhost:4205/remoteEntry.json` |
+| `CORS_ALLOWED_ORIGIN_REGEX` | Origins allowed to load `remoteEntry` and the manifest | `^http://localhost:420[0-5]$` |
 
 ## Commands
 

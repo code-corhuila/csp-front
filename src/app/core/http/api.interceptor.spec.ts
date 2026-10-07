@@ -2,10 +2,11 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SessionService } from '../auth/session.service';
+import { RUNTIME_CONFIG } from '../config/runtime-config';
 import { ApiError } from './api-error';
 import { apiInterceptor } from './api.interceptor';
 
-const MOVIES_URL = 'http://localhost:8000/api/v1/movies';
+const MOVIES_URL = 'http://gateway.test/api/v1/movies';
 
 describe('apiInterceptor', () => {
   let http: HttpClient;
@@ -16,6 +17,7 @@ describe('apiInterceptor', () => {
     sessionStorage.clear();
     TestBed.configureTestingModule({
       providers: [
+        { provide: RUNTIME_CONFIG, useValue: { gatewayUrl: 'http://gateway.test' } },
         provideHttpClient(withInterceptors([apiInterceptor])),
         provideHttpClientTesting(),
       ],
