@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -54,12 +54,38 @@ describe('ShellLayoutComponent', () => {
     expect(actions.querySelector('button')).toBeNull();
   });
 
-  it('offers only sign out while there is a session', async () => {
+  it('offers only sign out while there is a token', async () => {
     TestBed.inject(SessionService).set('abc');
     const harness = await RouterTestingHarness.create('/');
     const actions: HTMLElement = harness.routeNativeElement!.querySelector('.actions')!;
 
     expect(actions.querySelector('button')?.textContent).toBe('Sign out');
     expect(actions.querySelector('a')).toBeNull();
+  });
+
+  it('offers only sign out while the auth portal has a session, and ends it on sign out', async () => {
+    const open = signal(true);
+    const end = jasmine.createSpy('end').and.callFake(() => open.set(false));
+    await TestBed.inject(SessionService).connect(() => Promise.resolve({ isAuthenticated: open, end }));
+    const harness = await RouterTestingHarness.create('/');
+    const actions: HTMLElement = harness.routeNativeElement!.querySelector('.actions')!;
+    expect(actions.querySelector('a')).toBeNull();
+
+    actions.querySelector('button')!.click();
+    harness.detectChanges();
+
+    expect(end).toHaveBeenCalled();
+    expect(actions.querySelector('button')).toBeNull();
+    expect(actions.querySelectorAll('a').length).toBe(2);
+  });
+
+  it('clears the token on sign out', async () => {
+    const session = TestBed.inject(SessionService);
+    session.set('abc');
+    const harness = await RouterTestingHarness.create('/');
+
+    harness.routeNativeElement!.querySelector<HTMLButtonElement>('.actions button')!.click();
+
+    expect(session.token()).toBeNull();
   });
 });
