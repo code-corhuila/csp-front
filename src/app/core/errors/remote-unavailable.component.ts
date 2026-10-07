@@ -38,8 +38,12 @@ export class RemoteUnavailableComponent {
   }
 }
 
-/** The routes a portal is replaced with when its remoteEntry cannot be loaded. */
-export function remoteUnavailable(portal: string, err: unknown): Routes {
+/**
+ * The routes a portal is replaced with when its remoteEntry cannot be loaded.
+ * A portal mounted at the root passes '' so that only its start address shows
+ * the notice and the other addresses keep resolving.
+ */
+export function remoteUnavailable(portal: string, err: unknown, path = '**'): Routes {
   console.error(`portal "${portal}" failed to load`, err);
-  return [{ path: '**', component: RemoteUnavailableComponent, data: { portal } }];
+  return [{ path, pathMatch: path === '' ? 'full' : undefined, component: RemoteUnavailableComponent, data: { portal } }];
 }

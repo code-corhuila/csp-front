@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -19,10 +20,36 @@ describe('routes', () => {
     expect(harness.routeNativeElement?.textContent).toContain('Page not found');
   });
 
-  it('sends a protected route without session to sign-in with the returnUrl', async () => {
+  it('shows the notice at the start address when the catalog portal cannot be loaded', async () => {
+    spyOn(console, 'error');
+
+    const harness = await RouterTestingHarness.create('/');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Movies is not available right now');
+  });
+
+  it('keeps the 404 page for unknown addresses while the catalog portal is down', async () => {
+    spyOn(console, 'error');
+    const harness = await RouterTestingHarness.create('/');
+
+    await harness.navigateByUrl('/does-not-exist');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
+    expect(harness.routeNativeElement?.textContent).not.toContain('Movies is not available');
+  });
+
+  it('sends /movies to the start address, where the auth portal lands after signing in', async () => {
+    spyOn(console, 'error');
+
+    await RouterTestingHarness.create('/movies');
+
+    expect(TestBed.inject(Router).url).toBe('/');
+  });
+
+  it('sends a protected route without session to the auth login with the returnUrl', async () => {
     await RouterTestingHarness.create('/booking');
 
-    expect(TestBed.inject(Router).url).toBe('/sign-in?returnUrl=%2Fbooking');
+    expect(TestBed.inject(Router).url).toBe('/auth/login?returnUrl=%2Fbooking');
   });
 
   it('replaces only the area of a portal that cannot be loaded with a notice', async () => {
@@ -40,14 +67,39 @@ describe('routes', () => {
     TestBed.inject(SessionService).set('abc');
     const harness = await RouterTestingHarness.create('/booking');
 
-    await harness.navigateByUrl('/');
+    await harness.navigateByUrl('/does-not-exist');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Cinesync Platform');
+    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
   });
 
   it('mounts the token sign-in only in development', () => {
     expect(signInRoute(true).loadComponent).toBeDefined();
     expect(signInRoute(false).loadComponent).toBeUndefined();
     expect(signInRoute(false).redirectTo).toBe('auth/login');
+  });
+
+  it('sends the customer snack step without session to the auth login with the returnUrl', async () => {
+    await RouterTestingHarness.create('/booking/snack-selection');
+
+    expect(TestBed.inject(Router).url).toBe('/auth/login?returnUrl=%2Fbooking%2Fsnack-selection');
+  });
+
+  it('mounts the customer snack step before the booking portal, with its own notice when it is down', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/booking/snack-selection');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Snacks is not available right now');
+  });
+
+  it('sends a signed-in person without the ADMIN role from the concessions admin to the start address', async () => {
+    spyOn(console, 'error');
+    await TestBed.inject(SessionService).connect(() =>
+      Promise.resolve({ isAuthenticated: signal(true), end: () => undefined, hasRole: (r: string) => r === 'CLIENT' }));
+
+    await RouterTestingHarness.create('/admin/concessions');
+
+    expect(TestBed.inject(Router).url).toBe('/');
   });
 });

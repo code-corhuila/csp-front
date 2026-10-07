@@ -1,7 +1,15 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
+import {
+  ApplicationConfig,
+  inject,
+  Injector,
+  provideAppInitializer,
+  provideZonelessChangeDetection,
+} from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
+import { loadAuthPortalSession } from './core/auth/auth-portal-session';
+import { SessionService } from './core/auth/session.service';
 import { RuntimeConfig } from './core/config/runtime-config';
 import { RUNTIME_CONFIG } from './core/config/runtime-config.token';
 import { apiInterceptor } from './core/http/api.interceptor';
@@ -17,6 +25,9 @@ export function buildAppConfig(config: RuntimeConfig): ApplicationConfig {
       provideZonelessChangeDetection(),
       provideRouter(routes, withComponentInputBinding()),
       provideHttpClient(withInterceptors([apiInterceptor])),
+      provideAppInitializer(() =>
+        inject(SessionService).connect(loadAuthPortalSession(inject(Injector))),
+      ),
     ],
   };
 }

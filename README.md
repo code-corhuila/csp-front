@@ -28,6 +28,22 @@ The host runs on port `4200`. Each portal is registered in `public/federation.ma
 | `concessions` | `csp-concessions-portal` | 4204 |
 | `ticketing` | `csp-ticketing-portal` | 4205 |
 
+The `catalog` portal is mounted at the root of the shell: `/` is its billboard, and its absolute
+links (`/movies/:id`, `/showtimes/:id/seats`) resolve inside it. The shell has no home page of its own.
+
+Signing in through the auth portal opens the protected routes while the portals show synthetic data.
+The shell asks the session of the auth portal for the role (`SessionService.hasRole`), and the roles
+open these areas (ADR-027):
+
+| Route | Portal entry | Who |
+|---|---|---|
+| `/booking/snack-selection` | `concessions` `./snack-routes` | any signed-in person |
+| `/booking`, `/dashboard` | `booking`, `ticketing` `./routes` | any signed-in person |
+| `/admin/concessions` | `concessions` `./routes` | role `ADMIN` |
+
+The development token of `/sign-in` counts as every role. Neither is real security yet: no token is
+validated, and the role comes from the synthetic users of the auth portal.
+
 ## Per-environment configuration
 
 The image is built once and the same image is promoted from one environment to the next. What
