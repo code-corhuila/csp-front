@@ -16,7 +16,12 @@ import { SessionService } from '../core/auth/session.service';
         <a routerLink="/auth" routerLinkActive="active" ariaCurrentWhenActive="page">Account</a>
         <a routerLink="/booking" routerLinkActive="active" ariaCurrentWhenActive="page">Booking</a>
         <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">My tickets</a>
-        <a routerLink="/admin/concessions" routerLinkActive="active" ariaCurrentWhenActive="page">Concessions</a>
+        @if (session.isAuthenticated()) {
+          <a routerLink="/booking/snack-selection" routerLinkActive="active" ariaCurrentWhenActive="page">Snacks</a>
+        }
+        @if (session.hasRole('ADMIN')) {
+          <a routerLink="/admin/concessions" routerLinkActive="active" ariaCurrentWhenActive="page">Concessions</a>
+        }
       </nav>
       <div class="actions">
         @if (session.isAuthenticated()) {

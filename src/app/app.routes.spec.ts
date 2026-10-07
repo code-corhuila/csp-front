@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -75,5 +76,30 @@ describe('routes', () => {
     expect(signInRoute(true).loadComponent).toBeDefined();
     expect(signInRoute(false).loadComponent).toBeUndefined();
     expect(signInRoute(false).redirectTo).toBe('auth/login');
+  });
+
+  it('sends the customer snack step without session to the auth login with the returnUrl', async () => {
+    await RouterTestingHarness.create('/booking/snack-selection');
+
+    expect(TestBed.inject(Router).url).toBe('/auth/login?returnUrl=%2Fbooking%2Fsnack-selection');
+  });
+
+  it('mounts the customer snack step before the booking portal, with its own notice when it is down', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/booking/snack-selection');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Snacks is not available right now');
+  });
+
+  it('sends a signed-in person without the ADMIN role from the concessions admin to the start address', async () => {
+    spyOn(console, 'error');
+    await TestBed.inject(SessionService).connect(() =>
+      Promise.resolve({ isAuthenticated: signal(true), end: () => undefined, hasRole: (r: string) => r === 'CLIENT' }));
+
+    await RouterTestingHarness.create('/admin/concessions');
+
+    expect(TestBed.inject(Router).url).toBe('/');
   });
 });
