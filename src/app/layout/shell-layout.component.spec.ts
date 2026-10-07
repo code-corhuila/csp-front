@@ -21,12 +21,12 @@ describe('ShellLayoutComponent', () => {
   });
   afterEach(() => sessionStorage.clear());
 
-  it('shows the five navigation links and the brand', async () => {
+  it('shows the navigation links for a visitor and the brand', async () => {
     const harness = await RouterTestingHarness.create('/');
     const nav: HTMLElement = harness.routeNativeElement!.querySelector('nav')!;
 
     expect(Array.from(nav.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
-      'Movies', 'Account', 'Booking', 'My tickets', 'Concessions',
+      'Movies', 'Account', 'Booking', 'My tickets',
     ]);
     expect(harness.routeNativeElement!.querySelector('.brand')?.textContent).toContain('CineSync');
   });
@@ -66,7 +66,7 @@ describe('ShellLayoutComponent', () => {
   it('offers only sign out while the auth portal has a session, and ends it on sign out', async () => {
     const open = signal(true);
     const end = jasmine.createSpy('end').and.callFake(() => open.set(false));
-    await TestBed.inject(SessionService).connect(() => Promise.resolve({ isAuthenticated: open, end }));
+    await TestBed.inject(SessionService).connect(() => Promise.resolve({ isAuthenticated: open, end, hasRole: () => false }));
     const harness = await RouterTestingHarness.create('/');
     const actions: HTMLElement = harness.routeNativeElement!.querySelector('.actions')!;
     expect(actions.querySelector('a')).toBeNull();
@@ -87,5 +87,29 @@ describe('ShellLayoutComponent', () => {
     harness.routeNativeElement!.querySelector<HTMLButtonElement>('.actions button')!.click();
 
     expect(session.token()).toBeNull();
+  });
+
+  it('shows the Concessions admin link only to an ADMIN and Snacks to any signed-in person', async () => {
+    const roles = signal<string[]>(['CLIENT']);
+    await TestBed.inject(SessionService).connect(() =>
+      Promise.resolve({ isAuthenticated: signal(true), end: () => undefined, hasRole: (r: string) => roles().includes(r) }));
+    const harness = await RouterTestingHarness.create('/');
+    const links = () => Array.from(harness.routeNativeElement!.querySelectorAll('nav a')).map(a => a.getAttribute('href'));
+
+    expect(links()).toContain('/booking/snack-selection');
+    expect(links()).not.toContain('/admin/concessions');
+
+    roles.set(['CLIENT', 'ADMIN']);
+    harness.detectChanges();
+
+    expect(links()).toContain('/admin/concessions');
+  });
+
+  it('hides Snacks and the admin link from an anonymous visitor', async () => {
+    const harness = await RouterTestingHarness.create('/');
+    const links = Array.from(harness.routeNativeElement!.querySelectorAll('nav a')).map(a => a.getAttribute('href'));
+
+    expect(links).not.toContain('/booking/snack-selection');
+    expect(links).not.toContain('/admin/concessions');
   });
 });
