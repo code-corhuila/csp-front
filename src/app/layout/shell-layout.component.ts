@@ -100,6 +100,17 @@ import { SessionService } from '../core/auth/session.service';
     footer strong {
       color: var(--color-brand-primary);
     }
+    @media (max-width: 640px) {
+      nav {
+        flex: 1 1 100%;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
+      nav a {
+        flex: none;
+        white-space: nowrap;
+      }
+    }
   `,
 })
 export class ShellLayoutComponent {
