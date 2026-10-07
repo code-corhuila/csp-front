@@ -1,8 +1,12 @@
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { HomeComponent } from './home.component';
+import { SessionService } from '../core/auth/session.service';
 import { ShellLayoutComponent } from './shell-layout.component';
+
+@Component({ selector: 'app-page', template: '<p>page</p>' })
+class PageComponent {}
 
 describe('ShellLayoutComponent', () => {
   beforeEach(() => {
@@ -10,34 +14,102 @@ describe('ShellLayoutComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
-          { path: '', component: ShellLayoutComponent, children: [{ path: '', component: HomeComponent }] },
+          { path: '', component: ShellLayoutComponent, children: [{ path: '', component: PageComponent }] },
         ]),
       ],
     });
   });
   afterEach(() => sessionStorage.clear());
 
-  it('shows the six navigation links and the brand', async () => {
+  it('shows the navigation links for a visitor and the brand', async () => {
     const harness = await RouterTestingHarness.create('/');
     const nav: HTMLElement = harness.routeNativeElement!.querySelector('nav')!;
 
     expect(Array.from(nav.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
-      'Home', 'Account', 'Movies', 'Booking', 'My tickets', 'Concessions',
+      'Movies', 'Account', 'Booking', 'My tickets',
     ]);
     expect(harness.routeNativeElement!.querySelector('.brand')?.textContent).toContain('CineSync');
   });
 
-  it('marks the link of the current page as active', async () => {
+  it('marks the movies link as active at the start address', async () => {
     const harness = await RouterTestingHarness.create('/');
     const active = harness.routeNativeElement!.querySelectorAll('nav a.active');
 
     expect(active.length).toBe(1);
-    expect(active[0].textContent).toBe('Home');
+    expect(active[0].textContent).toBe('Movies');
+    expect(active[0].getAttribute('href')).toBe('/');
     expect(active[0].getAttribute('aria-current')).toBe('page');
   });
 
-  it('offers sign out only while there is a session', async () => {
+  it('offers log in and register, and no sign out, without a session', async () => {
     const harness = await RouterTestingHarness.create('/');
-    expect(harness.routeNativeElement!.querySelector('header button')).toBeNull();
+    const actions: HTMLElement = harness.routeNativeElement!.querySelector('.actions')!;
+    const login = actions.querySelector('a.btn-secondary')!;
+    const register = actions.querySelector('a.btn-primary')!;
+
+    expect(login.textContent).toBe('Iniciar sesión');
+    expect(login.getAttribute('href')).toBe('/auth/login');
+    expect(register.textContent).toBe('Registrarse');
+    expect(register.getAttribute('href')).toBe('/auth/register');
+    expect(actions.querySelector('button')).toBeNull();
+  });
+
+  it('offers only sign out while there is a token', async () => {
+    TestBed.inject(SessionService).set('abc');
+    const harness = await RouterTestingHarness.create('/');
+    const actions: HTMLElement = harness.routeNativeElement!.querySelector('.actions')!;
+
+    expect(actions.querySelector('button')?.textContent).toBe('Sign out');
+    expect(actions.querySelector('a')).toBeNull();
+  });
+
+  it('offers only sign out while the auth portal has a session, and ends it on sign out', async () => {
+    const open = signal(true);
+    const end = jasmine.createSpy('end').and.callFake(() => open.set(false));
+    await TestBed.inject(SessionService).connect(() => Promise.resolve({ isAuthenticated: open, end, hasRole: () => false }));
+    const harness = await RouterTestingHarness.create('/');
+    const actions: HTMLElement = harness.routeNativeElement!.querySelector('.actions')!;
+    expect(actions.querySelector('a')).toBeNull();
+
+    actions.querySelector('button')!.click();
+    harness.detectChanges();
+
+    expect(end).toHaveBeenCalled();
+    expect(actions.querySelector('button')).toBeNull();
+    expect(actions.querySelectorAll('a').length).toBe(2);
+  });
+
+  it('clears the token on sign out', async () => {
+    const session = TestBed.inject(SessionService);
+    session.set('abc');
+    const harness = await RouterTestingHarness.create('/');
+
+    harness.routeNativeElement!.querySelector<HTMLButtonElement>('.actions button')!.click();
+
+    expect(session.token()).toBeNull();
+  });
+
+  it('shows the Concessions admin link only to an ADMIN and Snacks to any signed-in person', async () => {
+    const roles = signal<string[]>(['CLIENT']);
+    await TestBed.inject(SessionService).connect(() =>
+      Promise.resolve({ isAuthenticated: signal(true), end: () => undefined, hasRole: (r: string) => roles().includes(r) }));
+    const harness = await RouterTestingHarness.create('/');
+    const links = () => Array.from(harness.routeNativeElement!.querySelectorAll('nav a')).map(a => a.getAttribute('href'));
+
+    expect(links()).toContain('/booking/snack-selection');
+    expect(links()).not.toContain('/admin/concessions');
+
+    roles.set(['CLIENT', 'ADMIN']);
+    harness.detectChanges();
+
+    expect(links()).toContain('/admin/concessions');
+  });
+
+  it('hides Snacks and the admin link from an anonymous visitor', async () => {
+    const harness = await RouterTestingHarness.create('/');
+    const links = Array.from(harness.routeNativeElement!.querySelectorAll('nav a')).map(a => a.getAttribute('href'));
+
+    expect(links).not.toContain('/booking/snack-selection');
+    expect(links).not.toContain('/admin/concessions');
   });
 });

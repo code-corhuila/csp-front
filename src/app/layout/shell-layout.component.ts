@@ -12,16 +12,25 @@ import { SessionService } from '../core/auth/session.service';
         <span>Cine<strong>Sync</strong></span>
       </a>
       <nav aria-label="Main">
-        <a routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+        <a routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">Movies</a>
         <a routerLink="/auth" routerLinkActive="active" ariaCurrentWhenActive="page">Account</a>
-        <a routerLink="/movies" routerLinkActive="active" ariaCurrentWhenActive="page">Movies</a>
         <a routerLink="/booking" routerLinkActive="active" ariaCurrentWhenActive="page">Booking</a>
         <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">My tickets</a>
-        <a routerLink="/admin/concessions" routerLinkActive="active" ariaCurrentWhenActive="page">Concessions</a>
+        @if (session.isAuthenticated()) {
+          <a routerLink="/booking/snack-selection" routerLinkActive="active" ariaCurrentWhenActive="page">Snacks</a>
+        }
+        @if (session.hasRole('ADMIN')) {
+          <a routerLink="/admin/concessions" routerLinkActive="active" ariaCurrentWhenActive="page">Concessions</a>
+        }
       </nav>
-      @if (session.token()) {
-        <button type="button" class="btn-secondary" (click)="session.clear()">Sign out</button>
-      }
+      <div class="actions">
+        @if (session.isAuthenticated()) {
+          <button type="button" class="btn-secondary" (click)="session.clear()">Sign out</button>
+        } @else {
+          <a routerLink="/auth/login" class="btn-secondary">Iniciar sesión</a>
+          <a routerLink="/auth/register" class="btn-primary">Registrarse</a>
+        }
+      </div>
     </header>
     <main><router-outlet /></main>
     <footer>
@@ -86,6 +95,13 @@ import { SessionService } from '../core/auth/session.service';
       background: rgba(139, 92, 246, 0.12);
       color: var(--color-brand-primary-hover);
     }
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+    .actions a:hover {
+      text-decoration: none;
+    }
     main {
       flex: 1;
       padding: 32px 6%;
@@ -101,7 +117,12 @@ import { SessionService } from '../core/auth/session.service';
       color: var(--color-brand-primary);
     }
     @media (max-width: 640px) {
+      .actions {
+        order: 1;
+        margin-left: auto;
+      }
       nav {
+        order: 2;
         flex: 1 1 100%;
         flex-wrap: nowrap;
         overflow-x: auto;
