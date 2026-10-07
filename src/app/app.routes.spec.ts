@@ -4,6 +4,7 @@ import { provideRouter, Router, withComponentInputBinding } from '@angular/route
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes, signInRoute } from './app.routes';
 import { SessionService } from './core/auth/session.service';
+import { registerFakeRemote } from './testing/fake-remote';
 
 describe('routes', () => {
   beforeEach(() => {
@@ -101,5 +102,33 @@ describe('routes', () => {
     await RouterTestingHarness.create('/admin/concessions');
 
     expect(TestBed.inject(Router).url).toBe('/');
+  });
+
+  describe('with every portal available', () => {
+    const portals: { remote: string; exposed: string; routes: string; address: string }[] = [
+      { remote: 'auth', exposed: './routes', routes: 'AUTH_ROUTES', address: '/auth' },
+      { remote: 'concessions', exposed: './snack-routes', routes: 'SNACK_ROUTES', address: '/booking/snack-selection' },
+      { remote: 'booking', exposed: './routes', routes: 'BOOKING_ROUTES', address: '/booking' },
+      { remote: 'ticketing', exposed: './routes', routes: 'TICKETING_ROUTES', address: '/dashboard' },
+      { remote: 'concessions', exposed: './routes', routes: 'CONCESSIONS_ROUTES', address: '/admin/concessions' },
+      { remote: 'catalog', exposed: './routes', routes: 'CATALOG_ROUTES', address: '/' },
+    ];
+
+    portals.forEach(({ remote, exposed, routes: exportName, address }) => {
+      it(`mounts ${address} with the ${exportName} of the ${remote} portal`, async () => {
+        const unregister = registerFakeRemote(remote, exposed, `export const ${exportName} = [{ path: '', children: [] }];`);
+        TestBed.inject(SessionService).set('abc');
+        spyOn(console, 'error');
+
+        try {
+          await RouterTestingHarness.create(address);
+
+          expect(TestBed.inject(Router).url).toBe(address);
+          expect(console.error).not.toHaveBeenCalled();
+        } finally {
+          unregister();
+        }
+      });
+    });
   });
 });
