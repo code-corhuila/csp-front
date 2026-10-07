@@ -57,6 +57,9 @@ export const routes: Routes = [
         .then((m) => m.CONCESSIONS_ROUTES)
         .catch((err) => remoteUnavailable('Concessions', err)),
   },
+  // The auth portal sends people to /movies after signing in and the navigation map
+  // calls it the catalog: it is the start address now.
+  { path: 'movies', pathMatch: 'full', redirectTo: '' },
   // The catalog portal owns the start address (billboard) and its own absolute
   // links (/movies/:id, /showtimes/:id/seats), so it is mounted at the root and
   // must stay after every other prefix. When it is down only '/' shows the

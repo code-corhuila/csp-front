@@ -37,6 +37,14 @@ describe('routes', () => {
     expect(harness.routeNativeElement?.textContent).not.toContain('Movies is not available');
   });
 
+  it('sends /movies to the start address, where the auth portal lands after signing in', async () => {
+    spyOn(console, 'error');
+
+    await RouterTestingHarness.create('/movies');
+
+    expect(TestBed.inject(Router).url).toBe('/');
+  });
+
   it('sends a protected route without session to sign-in with the returnUrl', async () => {
     await RouterTestingHarness.create('/booking');
 
