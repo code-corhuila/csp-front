@@ -45,10 +45,10 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/');
   });
 
-  it('sends a protected route without session to sign-in with the returnUrl', async () => {
+  it('sends a protected route without session to the auth login with the returnUrl', async () => {
     await RouterTestingHarness.create('/booking');
 
-    expect(TestBed.inject(Router).url).toBe('/sign-in?returnUrl=%2Fbooking');
+    expect(TestBed.inject(Router).url).toBe('/auth/login?returnUrl=%2Fbooking');
   });
 
   it('replaces only the area of a portal that cannot be loaded with a notice', async () => {

@@ -19,7 +19,7 @@ import { SessionService } from '../core/auth/session.service';
         <a routerLink="/admin/concessions" routerLinkActive="active" ariaCurrentWhenActive="page">Concessions</a>
       </nav>
       <div class="actions">
-        @if (session.token()) {
+        @if (session.isAuthenticated()) {
           <button type="button" class="btn-secondary" (click)="session.clear()">Sign out</button>
         } @else {
           <a routerLink="/auth/login" class="btn-secondary">Iniciar sesión</a>
