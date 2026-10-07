@@ -2,7 +2,8 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
-import { RUNTIME_CONFIG, RuntimeConfig } from './core/config/runtime-config';
+import { RuntimeConfig } from './core/config/runtime-config';
+import { RUNTIME_CONFIG } from './core/config/runtime-config.token';
 import { apiInterceptor } from './core/http/api.interceptor';
 
 /**
