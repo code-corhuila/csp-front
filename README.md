@@ -28,6 +28,9 @@ The host runs on port `4200`. Each portal is registered in `public/federation.ma
 | `concessions` | `csp-concessions-portal` | 4204 |
 | `ticketing` | `csp-ticketing-portal` | 4205 |
 
+The `catalog` portal is mounted at the root of the shell: `/` is its billboard, and its absolute
+links (`/movies/:id`, `/showtimes/:id/seats`) resolve inside it. The shell has no home page of its own.
+
 ## Per-environment configuration
 
 The image is built once and the same image is promoted from one environment to the next. What

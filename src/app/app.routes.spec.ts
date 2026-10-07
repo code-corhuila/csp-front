@@ -19,6 +19,32 @@ describe('routes', () => {
     expect(harness.routeNativeElement?.textContent).toContain('Page not found');
   });
 
+  it('shows the notice at the start address when the catalog portal cannot be loaded', async () => {
+    spyOn(console, 'error');
+
+    const harness = await RouterTestingHarness.create('/');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Movies is not available right now');
+  });
+
+  it('keeps the 404 page for unknown addresses while the catalog portal is down', async () => {
+    spyOn(console, 'error');
+    const harness = await RouterTestingHarness.create('/');
+
+    await harness.navigateByUrl('/does-not-exist');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
+    expect(harness.routeNativeElement?.textContent).not.toContain('Movies is not available');
+  });
+
+  it('sends /movies to the start address, where the auth portal lands after signing in', async () => {
+    spyOn(console, 'error');
+
+    await RouterTestingHarness.create('/movies');
+
+    expect(TestBed.inject(Router).url).toBe('/');
+  });
+
   it('sends a protected route without session to sign-in with the returnUrl', async () => {
     await RouterTestingHarness.create('/booking');
 
@@ -40,9 +66,9 @@ describe('routes', () => {
     TestBed.inject(SessionService).set('abc');
     const harness = await RouterTestingHarness.create('/booking');
 
-    await harness.navigateByUrl('/');
+    await harness.navigateByUrl('/does-not-exist');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Cinesync Platform');
+    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
   });
 
   it('mounts the token sign-in only in development', () => {

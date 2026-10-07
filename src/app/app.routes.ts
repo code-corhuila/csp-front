@@ -19,8 +19,6 @@ export const signInRoute = (devMode: boolean): Route =>
  * places it. Each portal exposes its routes as './routes'.
  */
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', title: 'Home', loadComponent: () =>
-      import('./layout/home.component').then((m) => m.HomeComponent) },
   signInRoute(isDevMode()),
   // A portal that cannot be loaded — down, or being deployed — shows its own
   // error; the shell and every other portal keep working.
@@ -31,14 +29,6 @@ export const routes: Routes = [
       loadRemoteModule('auth', './routes')
         .then((m) => m.AUTH_ROUTES)
         .catch((err) => remoteUnavailable('Authentication', err)),
-  },
-  {
-    path: 'movies',
-    title: 'Movies',
-    loadChildren: () =>
-      loadRemoteModule('catalog', './routes')
-        .then((m) => m.CATALOG_ROUTES)
-        .catch((err) => remoteUnavailable('Movies', err)),
   },
   {
     path: 'booking',
@@ -66,6 +56,21 @@ export const routes: Routes = [
       loadRemoteModule('concessions', './routes')
         .then((m) => m.CONCESSIONS_ROUTES)
         .catch((err) => remoteUnavailable('Concessions', err)),
+  },
+  // The auth portal sends people to /movies after signing in and the navigation map
+  // calls it the catalog: it is the start address now.
+  { path: 'movies', pathMatch: 'full', redirectTo: '' },
+  // The catalog portal owns the start address (billboard) and its own absolute
+  // links (/movies/:id, /showtimes/:id/seats), so it is mounted at the root and
+  // must stay after every other prefix. When it is down only '/' shows the
+  // notice; unknown addresses still fall through to the 404 page.
+  {
+    path: '',
+    title: 'Movies',
+    loadChildren: () =>
+      loadRemoteModule('catalog', './routes')
+        .then((m) => m.CATALOG_ROUTES)
+        .catch((err) => remoteUnavailable('Movies', err, '')),
   },
   { path: '**', title: 'Page not found', loadComponent: () =>
       import('./layout/not-found.component').then((m) => m.NotFoundComponent) },
