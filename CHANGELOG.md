@@ -20,7 +20,8 @@ look of the design system (HU-UI-001, [csp-docs#1](https://github.com/code-corhu
 - Runtime configuration per environment (ADR-026): `config.json`, `federation.manifest.json` and the CORS rule are rendered from the
   container environment when it starts (`GATEWAY_URL`, one `*_REMOTE_URL` per portal and `CORS_ALLOWED_ORIGIN_REGEX`); the container refuses to
   start without them. The shell reads the configuration before it starts the federation. ([#10](https://github.com/code-corhuila/csp-front/issues/10))
-- Development sign-in with an access token, mounted only in development.
+- Development sign-in with an access token: the page is mounted only in development, and the session service accepts and stores the token only in
+  development builds, so a production build ignores a token written in the browser storage. ([#28](https://github.com/code-corhuila/csp-front/issues/28))
 - Design system and mockup look: global tokens and button classes, favicon and logo, sticky header with the navigation, footer, and the 404
   and remote-unavailable pages. ([#11](https://github.com/code-corhuila/csp-front/issues/11))
 - Portal mounts: the catalog billboard at `/` ([#12](https://github.com/code-corhuila/csp-front/issues/12)), `/auth`, `/booking`, `/dashboard`
@@ -30,7 +31,7 @@ look of the design system (HU-UI-001, [csp-docs#1](https://github.com/code-corhu
   `ADMIN` and a Snacks link to signed-in people. (HU-FE-AUTH-001 and HU-FE-CONCESSIONS-001,
   [#15](https://github.com/code-corhuila/csp-front/issues/15))
 - A portal that is down only disables its own area: the shell shows a remote-unavailable notice and the rest keeps working.
-- Specs for the runtime configuration, the HTTP error mapping, the routes, the guards and the layout; 67 specs, 97.3% of lines.
+- Specs for the runtime configuration, the HTTP error mapping, the routes, the guards and the layout; 70 specs, 97.4% of lines.
 
 ### Known limits
 
