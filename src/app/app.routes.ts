@@ -1,8 +1,17 @@
 import { loadRemoteModule } from '@angular-architects/native-federation';
 import { isDevMode } from '@angular/core';
-import { Route, Routes } from '@angular/router';
+import { Route, Routes, UrlMatcher } from '@angular/router';
 import { authGuard, roleGuard } from './core/auth/auth.guard';
 import { remoteUnavailable } from './core/errors/remote-unavailable.component';
+
+/** The administration areas of the catalog in `12-ux-ui/navigation-map.md`: /admin/billboard, /admin/movies, /admin/rooms. */
+const CATALOG_ADMIN_AREAS = ['billboard', 'movies', 'rooms'];
+
+/** Consumes `admin` when the next segment is a catalog area; the entry declares the area as its own first segment. */
+export const catalogAdminMatcher: UrlMatcher = (segments) =>
+  segments.length >= 2 && segments[0].path === 'admin' && CATALOG_ADMIN_AREAS.includes(segments[1].path)
+    ? { consumed: [segments[0]] }
+    : null;
 
 /**
  * The paste-a-token sign-in exists only in development (ADR-022); any other
@@ -67,6 +76,28 @@ export const routes: Routes = [
       loadRemoteModule('concessions', './routes')
         .then((m) => m.CONCESSIONS_ROUTES)
         .catch((err) => remoteUnavailable('Concessions', err)),
+  },
+  // The read-only administration view of the reservations is its own entry of the booking portal
+  // (ADR-027), separate from the customer routes mounted at /booking.
+  {
+    path: 'admin/reservations',
+    title: 'Reservations',
+    canActivate: [roleGuard('ADMIN')],
+    loadChildren: () =>
+      loadRemoteModule('booking', './admin-routes')
+        .then((m) => m.ADMIN_ROUTES)
+        .catch((err) => remoteUnavailable('Reservations', err)),
+  },
+  // The catalog administration is one entry that declares billboard, movies and rooms; the shell
+  // consumes only `admin` and only for those three areas, so any other /admin address stays a 404.
+  {
+    matcher: catalogAdminMatcher,
+    title: 'Catalog administration',
+    canActivate: [roleGuard('ADMIN')],
+    loadChildren: () =>
+      loadRemoteModule('catalog', './admin-routes')
+        .then((m) => m.ADMIN_ROUTES)
+        .catch((err) => remoteUnavailable('Catalog administration', err)),
   },
   // The auth portal sends people to /movies after signing in and the navigation map
   // calls it the catalog: it is the start address now.

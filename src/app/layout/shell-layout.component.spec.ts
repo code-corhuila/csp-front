@@ -89,7 +89,7 @@ describe('ShellLayoutComponent', () => {
     expect(session.token()).toBeNull();
   });
 
-  it('shows the Concessions admin link only to an ADMIN and Snacks to any signed-in person', async () => {
+  it('shows the administration links only to an ADMIN and Snacks to any signed-in person', async () => {
     const roles = signal<string[]>(['CLIENT']);
     await TestBed.inject(SessionService).connect(() =>
       Promise.resolve({ isAuthenticated: signal(true), end: () => undefined, hasRole: (r: string) => roles().includes(r) }));
@@ -98,11 +98,13 @@ describe('ShellLayoutComponent', () => {
 
     expect(links()).toContain('/booking/snack-selection');
     expect(links()).not.toContain('/admin/concessions');
+    ['/admin/reservations', '/admin/billboard', '/admin/movies', '/admin/rooms'].forEach((href) => expect(links()).not.toContain(href));
 
     roles.set(['CLIENT', 'ADMIN']);
     harness.detectChanges();
 
     expect(links()).toContain('/admin/concessions');
+    ['/admin/reservations', '/admin/billboard', '/admin/movies', '/admin/rooms'].forEach((href) => expect(links()).toContain(href));
   });
 
   it('hides Snacks and the admin link from an anonymous visitor', async () => {
@@ -111,5 +113,6 @@ describe('ShellLayoutComponent', () => {
 
     expect(links).not.toContain('/booking/snack-selection');
     expect(links).not.toContain('/admin/concessions');
+    expect(links).not.toContain('/admin/reservations');
   });
 });
