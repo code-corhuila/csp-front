@@ -6,6 +6,8 @@ All notable changes of `csp-front` (the shell) are recorded here. The format fol
 re-applied with `git cherry-pick -x` (numerals 6.2.3, 10 and 11 of the course norm); it reaches `main` by pull request, never by merging `qa`,
 and is tagged `v<version>` once it is merged.
 
+## [Unreleased]
+
 ## [2.0.0] - 2026-10-08
 
 MVP 2 (Cut 2), first release of the shell. It hosts the portals of the five domains with Native Federation (ADR-022) and carries the
@@ -32,6 +34,7 @@ look of the design system (HU-UI-001, [csp-docs#1](https://github.com/code-corhu
 
 ### Known limits
 
+- The role guard and the session read from the auth portal are client-side checks that decide what the interface shows; they are not a security boundary until a backend enforces them.
 - The Cut 2 portals work with synthetic data: the integration checks of this release ran without the gateway (`GATEWAY_URL`), so no call through it was exercised.
 - The shell maps HTTP errors to its own `ApiError` (`src/app/core/http/api-error.ts`), but the contract shared between the shell and the portals
   is still open ([#1](https://github.com/code-corhuila/csp-front/issues/1)).
