@@ -1,6 +1,15 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, InjectionToken, isDevMode, signal } from '@angular/core';
 
 const KEY = 'csp.session.token';
+
+/**
+ * Whether the development token is accepted. It is only in development builds (ADR-022): a production
+ * build ignores the stored key, so nobody opens the protected routes by writing it in the browser.
+ */
+export const DEV_TOKEN_ALLOWED = new InjectionToken<boolean>('csp.devTokenAllowed', {
+  providedIn: 'root',
+  factory: () => isDevMode(),
+});
 
 /** What the shell needs from the session the auth portal keeps in memory. */
 export interface PortalSession {
@@ -16,7 +25,8 @@ export interface PortalSession {
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
-  private readonly tokenSignal = signal<string | null>(sessionStorage.getItem(KEY));
+  private readonly devTokenAllowed = inject(DEV_TOKEN_ALLOWED);
+  private readonly tokenSignal = signal<string | null>(this.devTokenAllowed ? sessionStorage.getItem(KEY) : null);
   private readonly portalSession = signal<PortalSession | null>(null);
 
   readonly token = this.tokenSignal.asReadonly();
@@ -42,6 +52,9 @@ export class SessionService {
   }
 
   set(token: string): void {
+    if (!this.devTokenAllowed) {
+      return;
+    }
     sessionStorage.setItem(KEY, token);
     this.tokenSignal.set(token);
   }
