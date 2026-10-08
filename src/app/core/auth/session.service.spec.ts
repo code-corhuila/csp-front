@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { PortalSession, SessionService } from './session.service';
+import { DEV_TOKEN_ALLOWED, PortalSession, SessionService } from './session.service';
 
 class FakePortalSession implements PortalSession {
   private readonly open = signal(false);
@@ -116,5 +116,39 @@ describe('SessionService', () => {
     session.clear();
 
     expect(session.isAuthenticated()).toBeFalse();
+  });
+
+  describe('in a production build', () => {
+    beforeEach(() => TestBed.configureTestingModule({ providers: [{ provide: DEV_TOKEN_ALLOWED, useValue: false }] }));
+
+    it('ignores a token written in the browser storage', () => {
+      sessionStorage.setItem('csp.session.token', 'written-by-hand');
+      const session = TestBed.inject(SessionService);
+
+      expect(session.token()).toBeNull();
+      expect(session.isAuthenticated()).toBeFalse();
+      expect(session.hasRole('ADMIN')).toBeFalse();
+    });
+
+    it('does not accept or store a token', () => {
+      const session = TestBed.inject(SessionService);
+
+      session.set('abc');
+
+      expect(session.token()).toBeNull();
+      expect(session.isAuthenticated()).toBeFalse();
+      expect(sessionStorage.getItem('csp.session.token')).toBeNull();
+    });
+
+    it('still follows the session of the auth portal', async () => {
+      const portal = new FakePortalSession();
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+
+      portal.start('ADMIN');
+
+      expect(session.isAuthenticated()).toBeTrue();
+      expect(session.hasRole('ADMIN')).toBeTrue();
+    });
   });
 });
