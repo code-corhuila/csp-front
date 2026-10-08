@@ -21,6 +21,10 @@ import { SessionService } from '../core/auth/session.service';
         }
         @if (session.hasRole('ADMIN')) {
           <a routerLink="/admin/concessions" routerLinkActive="active" ariaCurrentWhenActive="page">Concessions</a>
+          <a routerLink="/admin/reservations" routerLinkActive="active" ariaCurrentWhenActive="page">Reservations</a>
+          <a routerLink="/admin/billboard" routerLinkActive="active" ariaCurrentWhenActive="page">Billboard</a>
+          <a routerLink="/admin/movies" routerLinkActive="active" ariaCurrentWhenActive="page">Admin movies</a>
+          <a routerLink="/admin/rooms" routerLinkActive="active" ariaCurrentWhenActive="page">Rooms</a>
         }
       </nav>
       <div class="actions">

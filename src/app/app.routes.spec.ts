@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
+import { provideRouter, Router, UrlSegment, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { routes, signInRoute } from './app.routes';
+import { catalogAdminMatcher, routes, signInRoute } from './app.routes';
 import { SessionService } from './core/auth/session.service';
 import { registerFakeRemote } from './testing/fake-remote';
 
@@ -104,6 +104,65 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/');
   });
 
+  const adminAddresses = ['/admin/reservations', '/admin/billboard', '/admin/movies', '/admin/rooms'];
+
+  adminAddresses.forEach((address) => {
+    it(`sends ${address} without session to the auth login with the returnUrl`, async () => {
+      await RouterTestingHarness.create(address);
+
+      expect(TestBed.inject(Router).url).toBe(`/auth/login?returnUrl=${encodeURIComponent(address)}`);
+    });
+
+    it(`sends a signed-in person without the ADMIN role from ${address} to the start address`, async () => {
+      spyOn(console, 'error');
+      await TestBed.inject(SessionService).connect(() =>
+        Promise.resolve({ isAuthenticated: signal(true), end: () => undefined, hasRole: (r: string) => r === 'CLIENT' }));
+
+      await RouterTestingHarness.create(address);
+
+      expect(TestBed.inject(Router).url).toBe('/');
+    });
+  });
+
+  it('shows its own notice at /admin/reservations when the booking portal is down', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/admin/reservations');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Reservations is not available right now');
+  });
+
+  ['billboard', 'movies', 'rooms'].forEach((area) => {
+    it(`shows its own notice at /admin/${area} when the catalog portal is down`, async () => {
+      spyOn(console, 'error');
+      TestBed.inject(SessionService).set('abc');
+
+      const harness = await RouterTestingHarness.create(`/admin/${area}`);
+
+      expect(harness.routeNativeElement?.textContent).toContain('Catalog administration is not available right now');
+    });
+  });
+  it('keeps the 404 page for an /admin address that is not an administration area', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/admin/unknown');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
+  });
+
+  it('declares the catalog administration only for billboard, movies and rooms', () => {
+    const segments = (...paths: string[]) => paths.map((path) => new UrlSegment(path, {}));
+
+    ['billboard', 'movies', 'rooms'].forEach((area) => {
+      expect(catalogAdminMatcher(segments('admin', area), {} as never, {} as never)?.consumed.length).toBe(1);
+    });
+    expect(catalogAdminMatcher(segments('admin'), {} as never, {} as never)).toBeNull();
+    expect(catalogAdminMatcher(segments('admin', 'concessions'), {} as never, {} as never)).toBeNull();
+    expect(catalogAdminMatcher(segments('booking', 'movies'), {} as never, {} as never)).toBeNull();
+  });
+
   describe('with every portal available', () => {
     const portals: { remote: string; exposed: string; routes: string; address: string }[] = [
       { remote: 'auth', exposed: './routes', routes: 'AUTH_ROUTES', address: '/auth' },
@@ -111,6 +170,7 @@ describe('routes', () => {
       { remote: 'booking', exposed: './routes', routes: 'BOOKING_ROUTES', address: '/booking' },
       { remote: 'ticketing', exposed: './routes', routes: 'TICKETING_ROUTES', address: '/dashboard' },
       { remote: 'concessions', exposed: './routes', routes: 'CONCESSIONS_ROUTES', address: '/admin/concessions' },
+      { remote: 'booking', exposed: './admin-routes', routes: 'ADMIN_ROUTES', address: '/admin/reservations' },
       { remote: 'catalog', exposed: './routes', routes: 'CATALOG_ROUTES', address: '/' },
     ];
 
@@ -124,6 +184,27 @@ describe('routes', () => {
           await RouterTestingHarness.create(address);
 
           expect(TestBed.inject(Router).url).toBe(address);
+          expect(console.error).not.toHaveBeenCalled();
+        } finally {
+          unregister();
+        }
+      });
+    });
+
+    ['billboard', 'movies', 'rooms'].forEach((area) => {
+      it(`mounts /admin/${area} with the ADMIN_ROUTES of the catalog portal`, async () => {
+        const unregister = registerFakeRemote(
+          'catalog',
+          './admin-routes',
+          "export const ADMIN_ROUTES = [{ path: 'billboard', children: [] }, { path: 'movies', children: [] }, { path: 'rooms', children: [] }];",
+        );
+        TestBed.inject(SessionService).set('abc');
+        spyOn(console, 'error');
+
+        try {
+          await RouterTestingHarness.create(`/admin/${area}`);
+
+          expect(TestBed.inject(Router).url).toBe(`/admin/${area}`);
           expect(console.error).not.toHaveBeenCalled();
         } finally {
           unregister();
