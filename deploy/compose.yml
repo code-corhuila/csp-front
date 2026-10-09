@@ -1,0 +1,26 @@
+name: csp-front
+
+services:
+  csp-front:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: csp-front
+    ports:
+      - "4200:80"
+    environment:
+      GATEWAY_URL: http://localhost:8000
+      AUTH_REMOTE_URL: http://localhost:4201/remoteEntry.json
+      BOOKING_REMOTE_URL: http://localhost:4202/remoteEntry.json
+      CATALOG_REMOTE_URL: http://localhost:4203/remoteEntry.json
+      CONCESSIONS_REMOTE_URL: http://localhost:4204/remoteEntry.json
+      TICKETING_REMOTE_URL: http://localhost:4205/remoteEntry.json
+      CORS_ALLOWED_ORIGIN_REGEX: ^http://localhost:420[0-5]$$
+    networks:
+      - csp-frontend
+    restart: unless-stopped
+
+networks:
+  csp-frontend:
+    external: true
+    name: csp-frontend
