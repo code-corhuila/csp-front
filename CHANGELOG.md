@@ -25,16 +25,21 @@ look of the design system (HU-UI-001, [csp-docs#1](https://github.com/code-corhu
 - Design system and mockup look: global tokens and button classes, favicon and logo, sticky header with the navigation, footer, and the 404
   and remote-unavailable pages. ([#11](https://github.com/code-corhuila/csp-front/issues/11))
 - Portal mounts: the catalog billboard at `/` ([#12](https://github.com/code-corhuila/csp-front/issues/12)), `/auth`, `/booking`, `/dashboard`
-  (ticketing), the customer step `/booking/snack-selection` and the administration `/admin/concessions` (ADR-027).
+  (ticketing), the customer step `/booking/snack-selection`, the administration `/admin/concessions`, the booking administration
+  `/admin/reservations` ([#27](https://github.com/code-corhuila/csp-front/issues/27)) and the catalog administration `/admin/billboard`,
+  `/admin/movies` and `/admin/rooms` ([#30](https://github.com/code-corhuila/csp-front/issues/30)), the booking and the catalog ones through the entry `./admin-routes`
+  of their remote (ADR-027).
 - Session and role guard: a protected route without a session goes to `/auth/login?returnUrl=...`; the session is read from the
-  `./session` module of the auth portal, and `/admin/concessions` requires `ADMIN`; the navigation shows the administration link only to
+  `./session` module of the auth portal, and every administration address requires `ADMIN`; the navigation shows the administration links only to
   `ADMIN` and a Snacks link to signed-in people. (HU-FE-AUTH-001 and HU-FE-CONCESSIONS-001,
   [#15](https://github.com/code-corhuila/csp-front/issues/15))
 - A portal that is down only disables its own area: the shell shows a remote-unavailable notice and the rest keeps working.
-- Specs for the runtime configuration, the HTTP error mapping, the routes, the guards and the layout; 70 specs, 97.4% of lines.
+- Specs for the runtime configuration, the HTTP error mapping, the routes, the guards and the layout; 88 specs, 97.6% of lines.
 
 ### Known limits
 
+- The booking and the catalog portals do not expose `./admin-routes` yet (`csp-booking-portal#45`, `csp-catalog-portal#35`), so `/admin/reservations`, `/admin/billboard`, `/admin/movies` and `/admin/rooms` show the unavailable notice until they do; `admin/reports` of the navigation map is not mounted.
+- `deploy/nginx.conf` serves `index.html` without `Cache-Control`, so a browser can keep the previous shell after a deployment ([#35](https://github.com/code-corhuila/csp-front/issues/35)).
 - The role guard and the session read from the auth portal are client-side checks that decide what the interface shows; they are not a security boundary until a backend enforces them.
 - The Cut 2 portals work with synthetic data: the integration checks of this release ran without the gateway (`GATEWAY_URL`), so no call through it was exercised.
 - The shell maps HTTP errors to its own `ApiError` (`src/app/core/http/api-error.ts`), but the contract shared between the shell and the portals
