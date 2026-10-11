@@ -38,12 +38,12 @@ look of the design system (HU-UI-001, [csp-docs#1](https://github.com/code-corhu
 
 ### Known limits
 
-- The booking and the catalog portals do not expose `./admin-routes` yet (`csp-booking-portal#45`, `csp-catalog-portal#35`), so `/admin/reservations`, `/admin/billboard`, `/admin/movies` and `/admin/rooms` show the unavailable notice until they do; `admin/reports` of the navigation map is not mounted.
+- `admin/reports` of the navigation map is not mounted: the catalog administration entry declares it, but the shell consumes only `billboard`, `movies` and `rooms`, and the catalog menu shows Reportes disabled.
 - `deploy/nginx.conf` serves `index.html` without `Cache-Control`, so a browser can keep the previous shell after a deployment ([#35](https://github.com/code-corhuila/csp-front/issues/35)).
 - The role guard and the session read from the auth portal are client-side checks that decide what the interface shows; they are not a security boundary until a backend enforces them.
 - The Cut 2 portals work with synthetic data: the integration checks of this release ran without the gateway (`GATEWAY_URL`), so no call through it was exercised.
 - The shell maps HTTP errors to its own `ApiError` (`src/app/core/http/api-error.ts`), but the contract shared between the shell and the portals
   is still open ([#1](https://github.com/code-corhuila/csp-front/issues/1)).
-- A portal container must answer CORS for the shell (ADR-026, amended on 2026-10-08): `csp-auth-portal` and `csp-concessions-portal` do in
-  this cut; `csp-booking-portal`, `csp-catalog-portal` and `csp-ticketing-portal` have their own issues.
+- A portal container must answer CORS for the shell (ADR-026, amended on 2026-10-08): `csp-auth-portal`, `csp-concessions-portal` and `csp-booking-portal` do in
+  this cut; `csp-catalog-portal` answers `*` for any origin instead of the environment rule ([csp-catalog-portal#29](https://github.com/code-corhuila/csp-catalog-portal/issues/29)).
 - No integration or contract tests against an API: none was exercised in this cut.
