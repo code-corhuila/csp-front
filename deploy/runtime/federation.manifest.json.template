@@ -1,0 +1,7 @@
+{
+  "auth": "${AUTH_REMOTE_URL}",
+  "booking": "${BOOKING_REMOTE_URL}",
+  "catalog": "${CATALOG_REMOTE_URL}",
+  "concessions": "${CONCESSIONS_REMOTE_URL}",
+  "ticketing": "${TICKETING_REMOTE_URL}"
+}
