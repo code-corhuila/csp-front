@@ -4,8 +4,8 @@ import { Route, Routes, UrlMatcher } from '@angular/router';
 import { authGuard, roleGuard } from './core/auth/auth.guard';
 import { remoteUnavailable } from './core/errors/remote-unavailable.component';
 
-/** The administration areas of the catalog in `12-ux-ui/navigation-map.md`: /admin/billboard, /admin/movies, /admin/rooms. */
-const CATALOG_ADMIN_AREAS = ['billboard', 'movies', 'rooms'];
+/** The administration areas of the catalog in `12-ux-ui/navigation-map.md`: /admin/billboard, /admin/movies, /admin/rooms, /admin/reports. */
+const CATALOG_ADMIN_AREAS = ['billboard', 'movies', 'rooms', 'reports'];
 
 /** Consumes `admin` when the next segment is a catalog area; the entry declares the area as its own first segment. */
 export const catalogAdminMatcher: UrlMatcher = (segments) =>

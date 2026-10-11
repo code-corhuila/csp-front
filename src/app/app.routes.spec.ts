@@ -104,7 +104,7 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/');
   });
 
-  const adminAddresses = ['/admin/reservations', '/admin/billboard', '/admin/movies', '/admin/rooms'];
+  const adminAddresses = ['/admin/reservations', '/admin/billboard', '/admin/movies', '/admin/rooms', '/admin/reports'];
 
   adminAddresses.forEach((address) => {
     it(`sends ${address} without session to the auth login with the returnUrl`, async () => {
@@ -133,7 +133,7 @@ describe('routes', () => {
     expect(harness.routeNativeElement?.textContent).toContain('Reservations is not available right now');
   });
 
-  ['billboard', 'movies', 'rooms'].forEach((area) => {
+  ['billboard', 'movies', 'rooms', 'reports'].forEach((area) => {
     it(`shows its own notice at /admin/${area} when the catalog portal is down`, async () => {
       spyOn(console, 'error');
       TestBed.inject(SessionService).set('abc');
@@ -152,10 +152,10 @@ describe('routes', () => {
     expect(harness.routeNativeElement?.textContent).toContain('Page not found');
   });
 
-  it('declares the catalog administration only for billboard, movies and rooms', () => {
+  it('declares the catalog administration only for billboard, movies, rooms and reports', () => {
     const segments = (...paths: string[]) => paths.map((path) => new UrlSegment(path, {}));
 
-    ['billboard', 'movies', 'rooms'].forEach((area) => {
+    ['billboard', 'movies', 'rooms', 'reports'].forEach((area) => {
       expect(catalogAdminMatcher(segments('admin', area), {} as never, {} as never)?.consumed.length).toBe(1);
     });
     expect(catalogAdminMatcher(segments('admin'), {} as never, {} as never)).toBeNull();
@@ -191,12 +191,12 @@ describe('routes', () => {
       });
     });
 
-    ['billboard', 'movies', 'rooms'].forEach((area) => {
+    ['billboard', 'movies', 'rooms', 'reports'].forEach((area) => {
       it(`mounts /admin/${area} with the ADMIN_ROUTES of the catalog portal`, async () => {
         const unregister = registerFakeRemote(
           'catalog',
           './admin-routes',
-          "export const ADMIN_ROUTES = [{ path: 'billboard', children: [] }, { path: 'movies', children: [] }, { path: 'rooms', children: [] }];",
+          "export const ADMIN_ROUTES = [{ path: 'billboard', children: [] }, { path: 'movies', children: [] }, { path: 'rooms', children: [] }, { path: 'reports', children: [] }];",
         );
         TestBed.inject(SessionService).set('abc');
         spyOn(console, 'error');
