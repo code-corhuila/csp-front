@@ -40,6 +40,7 @@ open these areas (ADR-027):
 | `/booking/snack-selection` | `concessions` `./snack-routes` | any signed-in person |
 | `/booking`, `/dashboard` | `booking`, `ticketing` `./routes` | any signed-in person |
 | `/admin/concessions` | `concessions` `./routes` | role `ADMIN` |
+| `/admin/users` | `auth` `./admin-routes` | role `ADMIN` |
 
 The development token of `/sign-in` counts as every role. Neither is real security yet: no token is
 validated, and the role comes from the synthetic users of the auth portal.
