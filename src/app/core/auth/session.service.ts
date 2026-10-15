@@ -23,6 +23,11 @@ export interface PortalSession {
    * when the attempt finished, whatever the outcome; a portal that predates it simply starts without session.
    */
   restore?(): Promise<void>;
+  /**
+   * Optional: closes the session on the server (it needs the access token still set) and then ends it locally,
+   * even if the server call fails. Only an explicit sign out uses it; a rejected token goes through `end()`.
+   */
+  signOut?(): Promise<void>;
 }
 
 /** How long the shell waits for the portal to restore the session before it starts without one. */
@@ -96,6 +101,22 @@ export class SessionService {
     }
     sessionStorage.setItem(KEY, token);
     this.tokenSignal.set(token);
+  }
+
+  /**
+   * The explicit sign out of the person: the portal closes the session on the server first, and then
+   * everything is cleared, even if that call fails. Without portal `signOut()` it is just `clear()`.
+   */
+  async signOut(): Promise<void> {
+    const portal = this.portalSession();
+    if (portal?.signOut) {
+      try {
+        await portal.signOut();
+      } catch (err) {
+        console.error('The session could not be closed on the server', err);
+      }
+    }
+    this.clear();
   }
 
   clear(): void {
