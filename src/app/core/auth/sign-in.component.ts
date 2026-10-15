@@ -13,10 +13,10 @@ import { SessionService } from './session.service';
   imports: [ReactiveFormsModule],
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" aria-labelledby="signin-title">
-      <h1 id="signin-title">Sign in</h1>
-      <label for="dev-token">Access token (development)</label>
+      <h1 id="signin-title">Iniciar sesión</h1>
+      <label for="dev-token">Token de acceso (desarrollo)</label>
       <textarea id="dev-token" rows="4" formControlName="token"></textarea>
-      <button type="submit" class="btn-primary" [disabled]="form.invalid">Sign in</button>
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">Iniciar sesión</button>
     </form>
   `,
   styles: `

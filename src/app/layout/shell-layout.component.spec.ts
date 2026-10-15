@@ -26,7 +26,7 @@ describe('ShellLayoutComponent', () => {
     const nav: HTMLElement = harness.routeNativeElement!.querySelector('nav')!;
 
     expect(Array.from(nav.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
-      'Movies', 'Account', 'Booking', 'My tickets',
+      'Películas', 'Mi cuenta', 'Reservas', 'Mis boletas',
     ]);
     expect(harness.routeNativeElement!.querySelector('.brand')?.textContent).toContain('CineSync');
   });
@@ -36,7 +36,7 @@ describe('ShellLayoutComponent', () => {
     const active = harness.routeNativeElement!.querySelectorAll('nav a.active');
 
     expect(active.length).toBe(1);
-    expect(active[0].textContent).toBe('Movies');
+    expect(active[0].textContent).toBe('Películas');
     expect(active[0].getAttribute('href')).toBe('/');
     expect(active[0].getAttribute('aria-current')).toBe('page');
   });
@@ -59,7 +59,7 @@ describe('ShellLayoutComponent', () => {
     const harness = await RouterTestingHarness.create('/');
     const actions: HTMLElement = harness.routeNativeElement!.querySelector('.actions')!;
 
-    expect(actions.querySelector('button')?.textContent).toBe('Sign out');
+    expect(actions.querySelector('button')?.textContent).toBe('Cerrar sesión');
     expect(actions.querySelector('a')).toBeNull();
   });
 

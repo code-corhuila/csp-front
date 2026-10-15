@@ -10,7 +10,7 @@ and is tagged `v<version>` once it is merged.
 
 ### Fixed
 
-- The user roles administration of HU-AUTH-003 is shown in Spanish: the menu link and the route title read "Roles de usuarios", and so does the name given to the unavailable notice ([csp-front#47](https://github.com/code-corhuila/csp-front/issues/47)).
+- Everything a person sees in the shell is in Spanish: the navigation (Películas, Mi cuenta, Reservas, Mis boletas, Confitería, Cartelera, Salas, Roles de usuarios...), the page titles, the notice of a portal that is not available, the page not found, the development sign-in, the messages of `ApiError.userMessage`, the startup errors and `lang="es"` ([csp-front#47](https://github.com/code-corhuila/csp-front/issues/47)). The portals copy the `userMessage` texts in their `shell-contract.ts`.
 
 ### Added
 
