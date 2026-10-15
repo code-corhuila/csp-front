@@ -88,6 +88,17 @@ export const routes: Routes = [
         .then((m) => m.ADMIN_ROUTES)
         .catch((err) => remoteUnavailable('Reservations', err)),
   },
+  // The administration of the user roles is its own entry of the auth portal, separate from the
+  // sign-in and account routes mounted at /auth.
+  {
+    path: 'admin/users',
+    title: 'User roles',
+    canActivate: [roleGuard('ADMIN')],
+    loadChildren: () =>
+      loadRemoteModule('auth', './admin-routes')
+        .then((m) => m.ADMIN_ROUTES)
+        .catch((err) => remoteUnavailable('User roles', err)),
+  },
   // The catalog administration is one entry that declares billboard, movies and rooms; the shell
   // consumes only `admin` and only for those three areas, so any other /admin address stays a 404.
   {

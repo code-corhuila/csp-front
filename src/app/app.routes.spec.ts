@@ -104,7 +104,7 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/');
   });
 
-  const adminAddresses = ['/admin/reservations', '/admin/billboard', '/admin/movies', '/admin/rooms', '/admin/reports'];
+  const adminAddresses = ['/admin/reservations', '/admin/users', '/admin/billboard', '/admin/movies', '/admin/rooms', '/admin/reports'];
 
   adminAddresses.forEach((address) => {
     it(`sends ${address} without session to the auth login with the returnUrl`, async () => {
@@ -131,6 +131,15 @@ describe('routes', () => {
     const harness = await RouterTestingHarness.create('/admin/reservations');
 
     expect(harness.routeNativeElement?.textContent).toContain('Reservations is not available right now');
+  });
+
+  it('shows its own notice at /admin/users when the auth portal is down', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/admin/users');
+
+    expect(harness.routeNativeElement?.textContent).toContain('User roles is not available right now');
   });
 
   ['billboard', 'movies', 'rooms', 'reports'].forEach((area) => {
@@ -171,6 +180,7 @@ describe('routes', () => {
       { remote: 'ticketing', exposed: './routes', routes: 'TICKETING_ROUTES', address: '/dashboard' },
       { remote: 'concessions', exposed: './routes', routes: 'CONCESSIONS_ROUTES', address: '/admin/concessions' },
       { remote: 'booking', exposed: './admin-routes', routes: 'ADMIN_ROUTES', address: '/admin/reservations' },
+      { remote: 'auth', exposed: './admin-routes', routes: 'ADMIN_ROUTES', address: '/admin/users' },
       { remote: 'catalog', exposed: './routes', routes: 'CATALOG_ROUTES', address: '/' },
     ];
 
