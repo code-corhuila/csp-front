@@ -92,12 +92,12 @@ export const routes: Routes = [
   // sign-in and account routes mounted at /auth.
   {
     path: 'admin/users',
-    title: 'User roles',
+    title: 'Roles de usuarios',
     canActivate: [roleGuard('ADMIN')],
     loadChildren: () =>
       loadRemoteModule('auth', './admin-routes')
         .then((m) => m.ADMIN_ROUTES)
-        .catch((err) => remoteUnavailable('User roles', err)),
+        .catch((err) => remoteUnavailable('Roles de usuarios', err)),
   },
   // The catalog administration is one entry that declares billboard, movies and rooms; the shell
   // consumes only `admin` and only for those three areas, so any other /admin address stays a 404.
