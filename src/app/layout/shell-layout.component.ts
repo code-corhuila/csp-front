@@ -30,7 +30,7 @@ import { SessionService } from '../core/auth/session.service';
       </nav>
       <div class="actions">
         @if (session.isAuthenticated()) {
-          <button type="button" class="btn-secondary" (click)="session.clear()">Cerrar sesión</button>
+          <button type="button" class="btn-secondary" (click)="session.signOut()">Cerrar sesión</button>
         } @else {
           <a routerLink="/auth/login" class="btn-secondary">Iniciar sesión</a>
           <a routerLink="/auth/register" class="btn-primary">Registrarse</a>
