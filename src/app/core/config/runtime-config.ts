@@ -11,7 +11,7 @@ const CONFIG_PATH = 'config.json';
 export async function loadRuntimeConfig(fetchFn: typeof fetch = fetch): Promise<RuntimeConfig> {
   const response = await fetchFn(CONFIG_PATH, { cache: 'no-store' });
   if (!response.ok) {
-    throw new Error(`No se puede iniciar: ${CONFIG_PATH} respondió HTTP ${response.status}.`);
+    throw new Error(`No se puede iniciar: ${CONFIG_PATH} respondiÃ³ HTTP ${response.status}.`);
   }
   const body: unknown = await response.json();
   const gatewayUrl = (body as { gatewayUrl?: unknown } | null)?.gatewayUrl;

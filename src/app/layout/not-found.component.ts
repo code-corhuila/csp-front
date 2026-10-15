@@ -6,8 +6,8 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   template: `
     <section>
-      <h1>Página no encontrada</h1>
-      <p>La dirección no existe. <a routerLink="/">Ir al inicio</a>.</p>
+      <h1>PÃ¡gina no encontrada</h1>
+      <p>La direcciÃ³n no existe. <a routerLink="/">Ir al inicio</a>.</p>
     </section>
   `,
   styles: `

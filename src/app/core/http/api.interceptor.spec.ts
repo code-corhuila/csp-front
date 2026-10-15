@@ -90,7 +90,7 @@ describe('apiInterceptor', () => {
     expect(error?.status).toBe(400);
     expect(error?.code).toBe('VALIDATION_ERROR');
     expect(error?.details).toEqual([{ field: 'title', message: 'Required' }]);
-    expect(error?.userMessage).toContain('no son válidos');
+    expect(error?.userMessage).toContain('no son vÃ¡lidos');
   });
 
   it('closes the session on a 401', () => {
@@ -124,7 +124,7 @@ describe('apiInterceptor', () => {
 
       expect(error?.status).toBe(0);
       expect(error?.code).toBe('TIMEOUT');
-      expect(error?.userMessage).toContain('tardó demasiado');
+      expect(error?.userMessage).toContain('tardÃ³ demasiado');
     });
   });
 });
