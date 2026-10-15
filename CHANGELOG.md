@@ -10,6 +10,7 @@ and is tagged `v<version>` once it is merged.
 
 ### Added
 
+- Route `/admin/users` mounts the `./admin-routes` entry of the auth portal behind `roleGuard('ADMIN')`, and the navigation shows a "User roles" link to administrators (HU-AUTH-003, [csp-front#43](https://github.com/code-corhuila/csp-front/issues/43)). It needs the portal entry `./admin-routes`; when the portal or the entry is missing the shell shows its own notice. The catalog administration matcher does not consume `/admin/users`.
 - The shell sends the access token of the auth portal session as `Authorization: Bearer` on every `/api/` request (HU-AUTH-003, [csp-front#44](https://github.com/code-corhuila/csp-front/issues/44)). The portal exposes it with `accessToken()` on the session it shares through `./session`; the member is optional, so a portal that predates it still connects and the shell sends no token. The development token keeps working in development builds only (ADR-022).
 
 ### Fixed
