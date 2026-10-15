@@ -6,11 +6,24 @@ class FakePortalSession implements PortalSession {
   private readonly open = signal(false);
   readonly isAuthenticated = this.open.asReadonly();
   private roles: string[] = [];
-  readonly end = jasmine.createSpy('end').and.callFake(() => this.open.set(false));
+  private token: string | null = null;
+  readonly end = jasmine.createSpy('end').and.callFake(() => {
+    this.token = null;
+    this.open.set(false);
+  });
 
   start(...roles: string[]): void {
     this.roles = roles;
     this.open.set(true);
+  }
+
+  signIn(token: string): void {
+    this.token = token;
+    this.start();
+  }
+
+  accessToken(): string | null {
+    return this.token;
   }
 
   hasRole(role: string): boolean {
@@ -53,6 +66,38 @@ describe('SessionService', () => {
     expect(session.isAuthenticated()).toBeFalse();
 
     portal.start();
+
+    expect(session.isAuthenticated()).toBeTrue();
+    expect(session.token()).toBeNull();
+  });
+
+  it('takes the token from the auth portal session', async () => {
+    const portal = new FakePortalSession();
+    const session = TestBed.inject(SessionService);
+    await session.connect(() => Promise.resolve(portal));
+
+    expect(session.token()).toBeNull();
+
+    portal.signIn('portal-token');
+
+    expect(session.token()).toBe('portal-token');
+  });
+
+  it('prefers the development token over the one of the auth portal', async () => {
+    const portal = new FakePortalSession();
+    const session = TestBed.inject(SessionService);
+    await session.connect(() => Promise.resolve(portal));
+    portal.signIn('portal-token');
+
+    session.set('dev-token');
+
+    expect(session.token()).toBe('dev-token');
+  });
+
+  it('has no token when the auth portal predates the access token', async () => {
+    const session = TestBed.inject(SessionService);
+    const legacy: PortalSession = { isAuthenticated: () => true, hasRole: () => true, end: () => undefined };
+    await session.connect(() => Promise.resolve(legacy));
 
     expect(session.isAuthenticated()).toBeTrue();
     expect(session.token()).toBeNull();
@@ -138,6 +183,17 @@ describe('SessionService', () => {
       expect(session.token()).toBeNull();
       expect(session.isAuthenticated()).toBeFalse();
       expect(sessionStorage.getItem('csp.session.token')).toBeNull();
+    });
+
+    it('takes the token from the auth portal session alone', async () => {
+      const portal = new FakePortalSession();
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+      session.set('written-by-hand');
+
+      portal.signIn('portal-token');
+
+      expect(session.token()).toBe('portal-token');
     });
 
     it('still follows the session of the auth portal', async () => {

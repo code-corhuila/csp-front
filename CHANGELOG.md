@@ -8,6 +8,10 @@ and is tagged `v<version>` once it is merged.
 
 ## [Unreleased]
 
+### Added
+
+- The shell sends the access token of the auth portal session as `Authorization: Bearer` on every `/api/` request (HU-AUTH-003, [csp-front#44](https://github.com/code-corhuila/csp-front/issues/44)). The portal exposes it with `accessToken()` on the session it shares through `./session`; the member is optional, so a portal that predates it still connects and the shell sends no token. The development token keeps working in development builds only (ADR-022).
+
 ### Fixed
 
 - Container healthcheck calls `http://127.0.0.1/health` instead of `http://localhost/health`: inside the container `localhost` resolves first to `::1`, nginx listens on IPv4 only, and Docker reported the shell as `unhealthy` while it served traffic (TD-025).

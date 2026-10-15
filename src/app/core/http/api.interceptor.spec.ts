@@ -1,7 +1,7 @@
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { SessionService } from '../auth/session.service';
+import { PortalSession, SessionService } from '../auth/session.service';
 import { RUNTIME_CONFIG } from '../config/runtime-config.token';
 import { ApiError } from './api-error';
 import { apiInterceptor } from './api.interceptor';
@@ -47,6 +47,25 @@ describe('apiInterceptor', () => {
     const request = backend.expectOne(MOVIES_URL);
     expect(request.request.headers.get('Authorization')).toBe('Bearer abc');
     expect(request.request.headers.get('X-Correlation-Id')).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('sends the access token of the auth portal session, and drops it on a 401', async () => {
+    let accessToken: string | null = 'portal-token';
+    const portal: PortalSession = {
+      isAuthenticated: () => accessToken !== null,
+      hasRole: () => true,
+      end: () => (accessToken = null),
+      accessToken: () => accessToken,
+    };
+    await session.connect(() => Promise.resolve(portal));
+
+    http.get('/api/v1/movies').subscribe({ error: () => undefined });
+    const first = backend.expectOne(MOVIES_URL);
+    expect(first.request.headers.get('Authorization')).toBe('Bearer portal-token');
+    first.flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    http.get('/api/v1/movies').subscribe();
+    expect(backend.expectOne(MOVIES_URL).request.headers.has('Authorization')).toBeFalse();
   });
 
   it('omits Authorization without a session and uses a new correlation id per request', () => {
