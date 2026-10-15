@@ -5,8 +5,8 @@ import { Routes } from '@angular/router';
   selector: 'app-remote-unavailable',
   template: `
     <section role="alert">
-      <h1>{{ portal() }} no est· disponible en este momento</h1>
-      <p>El resto de la aplicaciÛn sigue funcionando.</p>
+      <h1>{{ portal() }} no est√° disponible en este momento</h1>
+      <p>El resto de la aplicaci√≥n sigue funcionando.</p>
       <button type="button" class="btn-secondary" (click)="retry()">Intentar de nuevo</button>
     </section>
   `,

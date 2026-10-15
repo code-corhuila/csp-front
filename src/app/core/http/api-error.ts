@@ -37,14 +37,14 @@ function describe(status: number, code: string, message: string, traceId: string
   const reference = traceId ? ` (referencia ${traceId})` : '';
   if (status === 0) {
     return code === 'TIMEOUT'
-      ? `El servidor tardó demasiado en responder. Intenta de nuevo.${reference}`
-      : `No se pudo contactar al servidor. Revisa tu conexión e intenta de nuevo.${reference}`;
+      ? `El servidor tardÃ³ demasiado en responder. Intenta de nuevo.${reference}`
+      : `No se pudo contactar al servidor. Revisa tu conexiÃ³n e intenta de nuevo.${reference}`;
   }
-  if (status === 400) return 'Algunos campos no son válidos. Revísalos e intenta de nuevo.';
-  if (status === 401) return 'Tu sesión ha expirado. Inicia sesión de nuevo.';
+  if (status === 400) return 'Algunos campos no son vÃ¡lidos. RevÃ­salos e intenta de nuevo.';
+  if (status === 401) return 'Tu sesiÃ³n ha expirado. Inicia sesiÃ³n de nuevo.';
   if (status === 403) return 'No tienes permiso para hacer esto.';
   if (status === 404) return 'No existe o fue eliminado.';
   if (status === 409 || status === 422) return message;
   if (status === 429) return 'Demasiadas solicitudes. Espera un momento e intenta de nuevo.';
-  return `El servicio no está disponible en este momento. Intenta más tarde.${reference}`;
+  return `El servicio no estÃ¡ disponible en este momento. Intenta mÃ¡s tarde.${reference}`;
 }

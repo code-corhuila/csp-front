@@ -53,11 +53,11 @@ describe('toApiError', () => {
     const message = (status: number) =>
       toApiError(new HttpErrorResponse({ status }), 'corr-1').userMessage;
 
-    expect(message(400)).toContain('no son v·lidos');
-    expect(message(401)).toContain('sesiÛn ha expirado');
+    expect(message(400)).toContain('no son v√°lidos');
+    expect(message(401)).toContain('sesi√≥n ha expirado');
     expect(message(403)).toContain('No tienes permiso');
     expect(message(404)).toContain('No existe');
     expect(message(429)).toContain('Demasiadas solicitudes');
-    expect(message(500)).toContain('no est· disponible en este momento');
+    expect(message(500)).toContain('no est√° disponible en este momento');
   });
 });
