@@ -77,4 +77,34 @@ describe('authGuard', () => {
         .toBe('/auth/login?returnUrl=%2Fbooking%2Fcheckout');
     });
   });
+
+  describe('after the session restore of a reloaded page', () => {
+    const portalRestoring = (signedIn: boolean) => {
+      const open = signal(false);
+      return {
+        isAuthenticated: open,
+        end: () => open.set(false),
+        hasRole: (role: string) => open() && role === 'ADMIN',
+        restore: () => {
+          open.set(signedIn);
+          return Promise.resolve();
+        },
+      };
+    };
+    const runRole = () =>
+      TestBed.runInInjectionContext(() => roleGuard('ADMIN')({} as ActivatedRouteSnapshot, { url: '/admin/users' } as RouterStateSnapshot));
+
+    it('keeps the person on the protected route when the restore found a session', async () => {
+      await TestBed.inject(SessionService).connect(() => Promise.resolve(portalRestoring(true)));
+
+      expect(runRole()).toBeTrue();
+    });
+
+    it('sends the person to the auth login when the restore found no session', async () => {
+      await TestBed.inject(SessionService).connect(() => Promise.resolve(portalRestoring(false)));
+
+      expect(TestBed.inject(Router).serializeUrl(runRole() as UrlTree))
+        .toBe('/auth/login?returnUrl=%2Fadmin%2Fusers');
+    });
+  });
 });

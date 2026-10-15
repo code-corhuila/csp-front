@@ -45,6 +45,16 @@ open these areas (ADR-027):
 The development token of `/sign-in` counts as every role. Neither is real security yet: no token is
 validated, and the role comes from the synthetic users of the auth portal.
 
+A reload keeps the session: the shell connects the session of the auth portal in an application
+initializer and, if the portal exposes `restore()`, waits for it before the first navigation, so the
+route guards read the restored session (reloading `/admin/users` with a valid refresh token stays
+there; without a session it goes to `/auth/login?returnUrl=...`). The wait is bounded by 10 seconds,
+and a portal that is unreachable, fails to restore or has no `restore()` lets the shell start without
+a session. The explicit "Cerrar sesión" button calls `SessionService.signOut()`, which asks the portal to close the
+session on the server (`signOut()`, with the access token still set) and then clears everything, even if
+that call fails; a portal without `signOut()` is just cleared. A `401` from the gateway still clears the
+session and ends the one of the portal, without a server call.
+
 ## Per-environment configuration
 
 The image is built once and the same image is promoted from one environment to the next. What
