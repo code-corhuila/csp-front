@@ -8,6 +8,7 @@ class FakePortalSession implements PortalSession {
   private roles: string[] = [];
   private token: string | null = null;
   restore?: () => Promise<void>;
+  signOut?: () => Promise<void>;
   readonly end = jasmine.createSpy('end').and.callFake(() => {
     this.token = null;
     this.open.set(false);
@@ -291,6 +292,65 @@ describe('SessionService', () => {
       await TestBed.inject(SessionService).connect(() => Promise.reject(new Error('down')));
 
       expect(console.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('explicit sign out', () => {
+    it('asks the portal to close the session and then clears everything', async () => {
+      const portal = new FakePortalSession();
+      portal.signOut = jasmine.createSpy('signOut').and.callFake(() => {
+        expect(session.token()).toBe('dev-token');
+        return Promise.resolve();
+      });
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+      portal.start();
+      session.set('dev-token');
+
+      await session.signOut();
+
+      expect(portal.signOut).toHaveBeenCalled();
+      expect(session.token()).toBeNull();
+      expect(session.isAuthenticated()).toBeFalse();
+      expect(portal.end).toHaveBeenCalled();
+    });
+
+    it('ends the session even when the portal sign out rejects', async () => {
+      spyOn(console, 'error');
+      const portal = new FakePortalSession();
+      portal.signOut = () => Promise.reject(new Error('offline'));
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+      portal.start();
+
+      await session.signOut();
+
+      expect(console.error).toHaveBeenCalled();
+      expect(session.isAuthenticated()).toBeFalse();
+    });
+
+    it('falls back to clear for a portal that predates signOut', async () => {
+      const portal = new FakePortalSession();
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+      portal.start();
+
+      await session.signOut();
+
+      expect(portal.end).toHaveBeenCalled();
+      expect(session.isAuthenticated()).toBeFalse();
+    });
+
+    it('does not call the portal signOut on clear', async () => {
+      const portal = new FakePortalSession();
+      portal.signOut = jasmine.createSpy('signOut').and.returnValue(Promise.resolve());
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+
+      session.clear();
+
+      expect(portal.signOut).not.toHaveBeenCalled();
+      expect(portal.end).toHaveBeenCalled();
     });
   });
 });
