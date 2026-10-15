@@ -16,6 +16,8 @@ export interface PortalSession {
   isAuthenticated(): boolean;
   hasRole(role: string): boolean;
   end(): void;
+  /** Optional: a portal that predates the access token still connects, and the shell sends no token for it. */
+  accessToken?(): string | null;
 }
 
 /**
@@ -29,10 +31,18 @@ export class SessionService {
   private readonly tokenSignal = signal<string | null>(this.devTokenAllowed ? sessionStorage.getItem(KEY) : null);
   private readonly portalSession = signal<PortalSession | null>(null);
 
-  readonly token = this.tokenSignal.asReadonly();
   readonly isAuthenticated = computed(
     () => this.tokenSignal() !== null || (this.portalSession()?.isAuthenticated() ?? false),
   );
+
+  /**
+   * The credential for the gateway: the development token (development builds only), otherwise the
+   * access token of the auth portal session. It is read on every call, so a token the portal renews
+   * or drops is never served stale.
+   */
+  token(): string | null {
+    return this.tokenSignal() ?? this.portalSession()?.accessToken?.() ?? null;
+  }
 
   /**
    * The roles come from the auth portal session. The development token carries no claims, so it
