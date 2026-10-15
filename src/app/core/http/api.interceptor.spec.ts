@@ -102,6 +102,19 @@ describe('apiInterceptor', () => {
     expect(session.token()).toBeNull();
   });
 
+  it('ends the portal session on a 401 without asking the server to close it', async () => {
+    const end = jasmine.createSpy('end');
+    const signOut = jasmine.createSpy('signOut');
+    await session.connect(() =>
+      Promise.resolve({ isAuthenticated: () => true, hasRole: () => true, end, signOut }));
+
+    http.get('/api/v1/movies').subscribe({ error: () => undefined });
+    backend.expectOne(MOVIES_URL).flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    expect(end).toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
   it('keeps the session on other failures', () => {
     session.set('abc');
     http.get('/api/v1/movies').subscribe({ error: () => undefined });

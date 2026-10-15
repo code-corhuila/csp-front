@@ -89,6 +89,22 @@ describe('ShellLayoutComponent', () => {
     expect(session.token()).toBeNull();
   });
 
+  it('asks the portal to close the session on the server when the person signs out', async () => {
+    const open = signal(true);
+    const signOut = jasmine.createSpy('signOut').and.callFake(() => {
+      open.set(false);
+      return Promise.resolve();
+    });
+    await TestBed.inject(SessionService).connect(() =>
+      Promise.resolve({ isAuthenticated: open, end: () => open.set(false), hasRole: () => false, signOut }));
+    const harness = await RouterTestingHarness.create('/');
+
+    harness.routeNativeElement!.querySelector<HTMLButtonElement>('.actions button')!.click();
+    await harness.fixture.whenStable();
+
+    expect(signOut).toHaveBeenCalled();
+  });
+
   it('shows the administration links only to an ADMIN and Snacks to any signed-in person', async () => {
     const roles = signal<string[]>(['CLIENT']);
     await TestBed.inject(SessionService).connect(() =>
