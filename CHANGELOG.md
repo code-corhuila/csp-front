@@ -8,6 +8,10 @@ and is tagged `v<version>` once it is merged.
 
 ## [Unreleased]
 
+### Fixed
+
+- Everything a person sees in the shell is in Spanish: the navigation (Películas, Mi cuenta, Reservas, Mis boletas, Confitería, Cartelera, Salas, Roles de usuarios...), the page titles, the notice of a portal that is not available, the page not found, the development sign-in, the messages of `ApiError.userMessage`, the startup errors and `lang="es"` ([csp-front#47](https://github.com/code-corhuila/csp-front/issues/47)). The portals copy the `userMessage` texts in their `shell-contract.ts`.
+
 ### Added
 
 - Route `/admin/users` mounts the `./admin-routes` entry of the auth portal behind `roleGuard('ADMIN')`, and the navigation shows a "User roles" link to administrators (HU-AUTH-003, [csp-front#43](https://github.com/code-corhuila/csp-front/issues/43)). It needs the portal entry `./admin-routes`; when the portal or the entry is missing the shell shows its own notice. The catalog administration matcher does not consume `/admin/users`.

@@ -26,11 +26,11 @@ describe('remoteUnavailable', () => {
 describe('RemoteUnavailableComponent', () => {
   it('names the portal and offers to try again', () => {
     const fixture = TestBed.createComponent(RemoteUnavailableComponent);
-    fixture.componentRef.setInput('portal', 'Snacks');
+    fixture.componentRef.setInput('portal', 'Confitería');
     fixture.detectChanges();
     const element: HTMLElement = fixture.nativeElement;
 
-    expect(element.querySelector('[role="alert"] h1')?.textContent).toBe('Snacks is not available right now');
-    expect(element.querySelector('button')?.textContent).toBe('Try again');
+    expect(element.querySelector('[role="alert"] h1')?.textContent).toBe('Confitería no está disponible en este momento');
+    expect(element.querySelector('button')?.textContent).toBe('Intentar de nuevo');
   });
 });

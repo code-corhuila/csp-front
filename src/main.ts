@@ -3,7 +3,7 @@ import { loadRuntimeConfig } from './app/core/config/runtime-config';
 
 function showStartupError(err: unknown): void {
   console.error(err);
-  document.body.textContent = err instanceof Error ? err.message : 'The application cannot start.';
+  document.body.textContent = err instanceof Error ? err.message : 'La aplicación no puede iniciar.';
 }
 
 // The environment configuration is read first: without it the shell must not start.

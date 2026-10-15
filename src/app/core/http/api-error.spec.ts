@@ -45,7 +45,7 @@ describe('toApiError', () => {
     const error = toApiError(new HttpErrorResponse({ status: 0 }), 'corr-1');
 
     expect(error.code).toBe('NETWORK_ERROR');
-    expect(error.userMessage).toContain('cannot be reached');
+    expect(error.userMessage).toContain('No se pudo contactar');
     expect(error.userMessage).toContain('corr-1');
   });
 
@@ -53,11 +53,11 @@ describe('toApiError', () => {
     const message = (status: number) =>
       toApiError(new HttpErrorResponse({ status }), 'corr-1').userMessage;
 
-    expect(message(400)).toContain('not valid');
-    expect(message(401)).toContain('session has expired');
-    expect(message(403)).toContain('not allowed');
-    expect(message(404)).toContain('does not exist');
-    expect(message(429)).toContain('Too many requests');
-    expect(message(500)).toContain('not available right now');
+    expect(message(400)).toContain('no son válidos');
+    expect(message(401)).toContain('sesión ha expirado');
+    expect(message(403)).toContain('No tienes permiso');
+    expect(message(404)).toContain('No existe');
+    expect(message(429)).toContain('Demasiadas solicitudes');
+    expect(message(500)).toContain('no está disponible en este momento');
   });
 });
