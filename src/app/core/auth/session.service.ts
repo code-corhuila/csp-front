@@ -18,7 +18,15 @@ export interface PortalSession {
   end(): void;
   /** Optional: a portal that predates the access token still connects, and the shell sends no token for it. */
   accessToken?(): string | null;
+  /**
+   * Optional: gets the session back after a reload (the portal keeps its refresh token for that). It resolves
+   * when the attempt finished, whatever the outcome; a portal that predates it simply starts without session.
+   */
+  restore?(): Promise<void>;
 }
+
+/** How long the shell waits for the portal to restore the session before it starts without one. */
+export const RESTORE_TIMEOUT_MS = 10_000;
 
 /**
  * The session, held once for the whole application: the development token or the
@@ -52,12 +60,33 @@ export class SessionService {
     return this.tokenSignal() !== null || (this.portalSession()?.hasRole(role) ?? false);
   }
 
-  /** A portal that cannot be reached must not stop the shell: it keeps the token alone. */
+  /**
+   * Connects the session of the auth portal and waits until it has tried to restore the session of a
+   * reloaded page, so nothing that reads the session (the route guards) runs before. A portal that cannot
+   * be reached, fails to restore or takes too long must not stop the shell: it starts without that session.
+   */
   async connect(load: () => Promise<PortalSession>): Promise<void> {
     try {
-      this.portalSession.set(await load());
+      const portal = await load();
+      this.portalSession.set(portal);
+      await this.restoreWithin(portal);
     } catch (err) {
       console.error('The session of the auth portal could not be connected', err);
+    }
+  }
+
+  private async restoreWithin(portal: PortalSession): Promise<void> {
+    if (!portal.restore) {
+      return;
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('The session restore timed out')), RESTORE_TIMEOUT_MS);
+    });
+    try {
+      await Promise.race([portal.restore(), timeout]);
+    } finally {
+      clearTimeout(timer);
     }
   }
 
