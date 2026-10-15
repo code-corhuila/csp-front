@@ -8,6 +8,10 @@ and is tagged `v<version>` once it is merged.
 
 ## [Unreleased]
 
+### Fixed
+
+- The user roles administration of HU-AUTH-003 is shown in Spanish: the menu link and the route title read "Roles de usuarios", and so does the name given to the unavailable notice ([csp-front#47](https://github.com/code-corhuila/csp-front/issues/47)).
+
 ### Added
 
 - Route `/admin/users` mounts the `./admin-routes` entry of the auth portal behind `roleGuard('ADMIN')`, and the navigation shows a "User roles" link to administrators (HU-AUTH-003, [csp-front#43](https://github.com/code-corhuila/csp-front/issues/43)). It needs the portal entry `./admin-routes`; when the portal or the entry is missing the shell shows its own notice. The catalog administration matcher does not consume `/admin/users`.

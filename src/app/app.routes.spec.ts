@@ -139,7 +139,7 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/admin/users');
 
-    expect(harness.routeNativeElement?.textContent).toContain('User roles is not available right now');
+    expect(harness.routeNativeElement?.textContent).toContain('Roles de usuarios is not available right now');
   });
 
   ['billboard', 'movies', 'rooms', 'reports'].forEach((area) => {
