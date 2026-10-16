@@ -24,6 +24,13 @@ export const signInRoute = (devMode: boolean): Route =>
     : { path: 'sign-in', redirectTo: 'auth/login' };
 
 /**
+ * Guarded routes run their guards again when the same address is navigated to again, which is how the shell
+ * moves the person away from a protected page when the session ends (the default only reruns them when the
+ * route parameters change).
+ */
+const RECHECKED_ON_SAME_URL: Pick<Route, 'runGuardsAndResolvers'> = { runGuardsAndResolvers: 'always' };
+
+/**
  * One entry per domain portal, mounted where csp-docs/12-ux-ui/navigation-map.md
  * places it. Each portal exposes its routes as './routes'.
  */
@@ -45,6 +52,7 @@ export const routes: Routes = [
     path: 'booking/snack-selection',
     title: 'Confitería',
     canActivate: [authGuard],
+    ...RECHECKED_ON_SAME_URL,
     loadChildren: () =>
       loadRemoteModule('concessions', './snack-routes')
         .then((m) => m.SNACK_ROUTES)
@@ -54,6 +62,7 @@ export const routes: Routes = [
     path: 'booking',
     title: 'Reservas',
     canActivate: [authGuard],
+    ...RECHECKED_ON_SAME_URL,
     loadChildren: () =>
       loadRemoteModule('booking', './routes')
         .then((m) => m.BOOKING_ROUTES)
@@ -63,6 +72,7 @@ export const routes: Routes = [
     path: 'dashboard',
     title: 'Mis boletas',
     canActivate: [authGuard],
+    ...RECHECKED_ON_SAME_URL,
     loadChildren: () =>
       loadRemoteModule('ticketing', './routes')
         .then((m) => m.TICKETING_ROUTES)
@@ -72,6 +82,7 @@ export const routes: Routes = [
     path: 'admin/concessions',
     title: 'Concesiones',
     canActivate: [roleGuard('ADMIN')],
+    ...RECHECKED_ON_SAME_URL,
     loadChildren: () =>
       loadRemoteModule('concessions', './routes')
         .then((m) => m.CONCESSIONS_ROUTES)
@@ -83,6 +94,7 @@ export const routes: Routes = [
     path: 'admin/reservations',
     title: 'Todas las reservas',
     canActivate: [roleGuard('ADMIN')],
+    ...RECHECKED_ON_SAME_URL,
     loadChildren: () =>
       loadRemoteModule('booking', './admin-routes')
         .then((m) => m.ADMIN_ROUTES)
@@ -94,6 +106,7 @@ export const routes: Routes = [
     path: 'admin/users',
     title: 'Roles de usuarios',
     canActivate: [roleGuard('ADMIN')],
+    ...RECHECKED_ON_SAME_URL,
     loadChildren: () =>
       loadRemoteModule('auth', './admin-routes')
         .then((m) => m.ADMIN_ROUTES)
@@ -105,6 +118,7 @@ export const routes: Routes = [
     matcher: catalogAdminMatcher,
     title: 'Administración del catálogo',
     canActivate: [roleGuard('ADMIN')],
+    ...RECHECKED_ON_SAME_URL,
     loadChildren: () =>
       loadRemoteModule('catalog', './admin-routes')
         .then((m) => m.ADMIN_ROUTES)

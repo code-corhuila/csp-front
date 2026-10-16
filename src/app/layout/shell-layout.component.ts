@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, effect, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SessionService } from '../core/auth/session.service';
 
 @Component({
@@ -30,7 +30,7 @@ import { SessionService } from '../core/auth/session.service';
       </nav>
       <div class="actions">
         @if (session.isAuthenticated()) {
-          <button type="button" class="btn-secondary" (click)="session.signOut()">Cerrar sesión</button>
+          <button type="button" class="btn-secondary" (click)="signOut()">Cerrar sesión</button>
         } @else {
           <a routerLink="/auth/login" class="btn-secondary">Iniciar sesión</a>
           <a routerLink="/auth/register" class="btn-primary">Registrarse</a>
@@ -141,4 +141,37 @@ import { SessionService } from '../core/auth/session.service';
 })
 export class ShellLayoutComponent {
   readonly session = inject(SessionService);
+  private readonly router = inject(Router);
+  private signingOut = false;
+
+  constructor() {
+    let wasAuthenticated = this.session.isAuthenticated();
+    effect(() => {
+      const authenticated = this.session.isAuthenticated();
+      if (wasAuthenticated && !authenticated) {
+        this.leaveAfterSessionEnd();
+      }
+      wasAuthenticated = authenticated;
+    });
+  }
+
+  /** The explicit sign out leaves for the start page. */
+  async signOut(): Promise<void> {
+    this.signingOut = true;
+    await this.session.signOut();
+    if (this.session.isAuthenticated()) {
+      this.signingOut = false;
+      return;
+    }
+    await this.router.navigateByUrl('/');
+  }
+
+  /** The sign out navigates by itself; any other end of the session must not leave a protected page on screen. */
+  private leaveAfterSessionEnd(): void {
+    if (this.signingOut) {
+      this.signingOut = false;
+      return;
+    }
+    void this.router.navigateByUrl(this.router.url, { onSameUrlNavigation: 'reload' });
+  }
 }
