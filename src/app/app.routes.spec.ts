@@ -18,7 +18,7 @@ describe('routes', () => {
   it('shows the 404 page for an address that does not exist', async () => {
     const harness = await RouterTestingHarness.create('/does-not-exist');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
   });
 
   it('shows the notice at the start address when the catalog portal cannot be loaded', async () => {
@@ -26,7 +26,7 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Movies is not available right now');
+    expect(harness.routeNativeElement?.textContent).toContain('Películas no está disponible en este momento');
   });
 
   it('keeps the 404 page for unknown addresses while the catalog portal is down', async () => {
@@ -35,8 +35,8 @@ describe('routes', () => {
 
     await harness.navigateByUrl('/does-not-exist');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
-    expect(harness.routeNativeElement?.textContent).not.toContain('Movies is not available');
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
+    expect(harness.routeNativeElement?.textContent).not.toContain('Películas no está disponible');
   });
 
   it('sends /movies to the start address, where the auth portal lands after signing in', async () => {
@@ -59,7 +59,7 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/booking');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Booking is not available right now');
+    expect(harness.routeNativeElement?.textContent).toContain('Reservas no está disponible en este momento');
     expect(console.error).toHaveBeenCalled();
   });
 
@@ -70,7 +70,7 @@ describe('routes', () => {
 
     await harness.navigateByUrl('/does-not-exist');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
   });
 
   it('mounts the token sign-in only in development', () => {
@@ -91,7 +91,7 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/booking/snack-selection');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Snacks is not available right now');
+    expect(harness.routeNativeElement?.textContent).toContain('Confitería no está disponible en este momento');
   });
 
   it('sends a signed-in person without the ADMIN role from the concessions admin to the start address', async () => {
@@ -104,7 +104,7 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/');
   });
 
-  const adminAddresses = ['/admin/reservations', '/admin/billboard', '/admin/movies', '/admin/rooms', '/admin/reports'];
+  const adminAddresses = ['/admin/reservations', '/admin/users', '/admin/billboard', '/admin/movies', '/admin/rooms', '/admin/reports'];
 
   adminAddresses.forEach((address) => {
     it(`sends ${address} without session to the auth login with the returnUrl`, async () => {
@@ -130,7 +130,16 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/admin/reservations');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Reservations is not available right now');
+    expect(harness.routeNativeElement?.textContent).toContain('Todas las reservas no está disponible en este momento');
+  });
+
+  it('shows its own notice at /admin/users when the auth portal is down', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/admin/users');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Roles de usuarios no está disponible en este momento');
   });
 
   ['billboard', 'movies', 'rooms', 'reports'].forEach((area) => {
@@ -140,7 +149,7 @@ describe('routes', () => {
 
       const harness = await RouterTestingHarness.create(`/admin/${area}`);
 
-      expect(harness.routeNativeElement?.textContent).toContain('Catalog administration is not available right now');
+      expect(harness.routeNativeElement?.textContent).toContain('Administración del catálogo no está disponible en este momento');
     });
   });
   it('keeps the 404 page for an /admin address that is not an administration area', async () => {
@@ -149,7 +158,7 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/admin/unknown');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
   });
 
   it('declares the catalog administration only for billboard, movies, rooms and reports', () => {
@@ -171,6 +180,7 @@ describe('routes', () => {
       { remote: 'ticketing', exposed: './routes', routes: 'TICKETING_ROUTES', address: '/dashboard' },
       { remote: 'concessions', exposed: './routes', routes: 'CONCESSIONS_ROUTES', address: '/admin/concessions' },
       { remote: 'booking', exposed: './admin-routes', routes: 'ADMIN_ROUTES', address: '/admin/reservations' },
+      { remote: 'auth', exposed: './admin-routes', routes: 'ADMIN_ROUTES', address: '/admin/users' },
       { remote: 'catalog', exposed: './routes', routes: 'CATALOG_ROUTES', address: '/' },
     ];
 

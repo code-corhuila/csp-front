@@ -8,6 +8,22 @@ and is tagged `v<version>` once it is merged.
 
 ## [Unreleased]
 
+### Fixed
+
+- Everything a person sees in the shell is in Spanish: the navigation (Películas, Mi cuenta, Reservas, Mis boletas, Confitería, Cartelera, Salas, Roles de usuarios...), the page titles, the notice of a portal that is not available, the page not found, the development sign-in, the messages of `ApiError.userMessage`, the startup errors and `lang="es"` ([csp-front#47](https://github.com/code-corhuila/csp-front/issues/47)). The portals copy the `userMessage` texts in their `shell-contract.ts`.
+- The sources of the Spanish copy are saved as UTF-8: fourteen files had been committed in Latin-1, so every accented text of the shell showed a replacement character (HU-AUTH-003, [csp-front#49](https://github.com/code-corhuila/csp-front/issues/49)).
+
+### Added
+
+- The "Cerrar sesión" button closes the session on the server first (HU-AUTH-003, [csp-front#51](https://github.com/code-corhuila/csp-front/issues/51)): `SessionService.signOut()` awaits the optional `signOut()` of the auth portal session and then clears the session even if the call fails. A `401` keeps ending the session locally through `end()`, without a server call.
+- A reload keeps the session (HU-AUTH-003, [csp-front#51](https://github.com/code-corhuila/csp-front/issues/51)): `SessionService.connect` calls the optional `restore()` of the auth portal session inside the application initializer, so the first navigation and the route guards wait for it (at most 10 seconds). A portal without `restore()`, one that fails or times out, or an unreachable one lets the shell start without a session.
+- Route `/admin/users` mounts the `./admin-routes` entry of the auth portal behind `roleGuard('ADMIN')`, and the navigation shows a "Roles de usuarios" link to administrators (HU-AUTH-003, [csp-front#43](https://github.com/code-corhuila/csp-front/issues/43)). It needs the portal entry `./admin-routes`; when the portal or the entry is missing the shell shows its own notice. The catalog administration matcher does not consume `/admin/users`.
+- The shell sends the access token of the auth portal session as `Authorization: Bearer` on every `/api/` request (HU-AUTH-003, [csp-front#44](https://github.com/code-corhuila/csp-front/issues/44)). The portal exposes it with `accessToken()` on the session it shares through `./session`; the member is optional, so a portal that predates it still connects and the shell sends no token. The development token keeps working in development builds only (ADR-022).
+
+### Fixed
+
+- Container healthcheck calls `http://127.0.0.1/health` instead of `http://localhost/health`: inside the container `localhost` resolves first to `::1`, nginx listens on IPv4 only, and Docker reported the shell as `unhealthy` while it served traffic (TD-025).
+
 ## [2.0.0] - 2026-10-08
 
 MVP 2 (Cut 2), first release of the shell. It hosts the portals of the five domains with Native Federation (ADR-022) and carries the
