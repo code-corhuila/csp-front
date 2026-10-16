@@ -19,7 +19,7 @@ export const catalogAdminMatcher: UrlMatcher = (segments) =>
  */
 export const signInRoute = (devMode: boolean): Route =>
   devMode
-    ? { path: 'sign-in', title: 'Sign in', loadComponent: () =>
+    ? { path: 'sign-in', title: 'Iniciar sesión', loadComponent: () =>
         import('./core/auth/sign-in.component').then((m) => m.SignInComponent) }
     : { path: 'sign-in', redirectTo: 'auth/login' };
 
@@ -33,71 +33,82 @@ export const routes: Routes = [
   // error; the shell and every other portal keep working.
   {
     path: 'auth',
-    title: 'Authentication',
+    title: 'Autenticación',
     loadChildren: () =>
       loadRemoteModule('auth', './routes')
         .then((m) => m.AUTH_ROUTES)
-        .catch((err) => remoteUnavailable('Authentication', err)),
+        .catch((err) => remoteUnavailable('Autenticación', err)),
   },
   // The customer step of the purchase flow belongs to the concessions portal (ADR-027). Its address
   // is under /booking, so it is declared before the booking portal, which owns the prefix.
   {
     path: 'booking/snack-selection',
-    title: 'Snacks',
+    title: 'Confitería',
     canActivate: [authGuard],
     loadChildren: () =>
       loadRemoteModule('concessions', './snack-routes')
         .then((m) => m.SNACK_ROUTES)
-        .catch((err) => remoteUnavailable('Snacks', err)),
+        .catch((err) => remoteUnavailable('Confitería', err)),
   },
   {
     path: 'booking',
-    title: 'Booking',
+    title: 'Reservas',
     canActivate: [authGuard],
     loadChildren: () =>
       loadRemoteModule('booking', './routes')
         .then((m) => m.BOOKING_ROUTES)
-        .catch((err) => remoteUnavailable('Booking', err)),
+        .catch((err) => remoteUnavailable('Reservas', err)),
   },
   {
     path: 'dashboard',
-    title: 'Dashboard',
+    title: 'Mis boletas',
     canActivate: [authGuard],
     loadChildren: () =>
       loadRemoteModule('ticketing', './routes')
         .then((m) => m.TICKETING_ROUTES)
-        .catch((err) => remoteUnavailable('Tickets', err)),
+        .catch((err) => remoteUnavailable('Mis boletas', err)),
   },
   {
     path: 'admin/concessions',
-    title: 'Concessions',
+    title: 'Concesiones',
     canActivate: [roleGuard('ADMIN')],
     loadChildren: () =>
       loadRemoteModule('concessions', './routes')
         .then((m) => m.CONCESSIONS_ROUTES)
-        .catch((err) => remoteUnavailable('Concessions', err)),
+        .catch((err) => remoteUnavailable('Concesiones', err)),
   },
   // The read-only administration view of the reservations is its own entry of the booking portal
   // (ADR-027), separate from the customer routes mounted at /booking.
   {
     path: 'admin/reservations',
-    title: 'Reservations',
+    title: 'Todas las reservas',
     canActivate: [roleGuard('ADMIN')],
     loadChildren: () =>
       loadRemoteModule('booking', './admin-routes')
         .then((m) => m.ADMIN_ROUTES)
-        .catch((err) => remoteUnavailable('Reservations', err)),
+        .catch((err) => remoteUnavailable('Todas las reservas', err)),
+  },
+  // The administration of the user roles is its own entry of the auth portal, separate from the
+  // sign-in and account routes mounted at /auth.
+  {
+    path: 'admin/users',
+    title: 'Roles de usuarios',
+    canActivate: [roleGuard('ADMIN')],
+    loadChildren: () =>
+      loadRemoteModule('auth', './admin-routes')
+        .then((m) => m.ADMIN_ROUTES)
+        .catch((err) => remoteUnavailable('Roles de usuarios', err)),
   },
   // The catalog administration is one entry that declares billboard, movies and rooms; the shell
   // consumes only `admin` and only for those three areas, so any other /admin address stays a 404.
   {
     matcher: catalogAdminMatcher,
-    title: 'Catalog administration',
+    title: 'Administración del catálogo',
     canActivate: [roleGuard('ADMIN')],
     loadChildren: () =>
       loadRemoteModule('catalog', './admin-routes')
         .then((m) => m.ADMIN_ROUTES)
-        .catch((err) => remoteUnavailable('Catalog administration', err)),
+        .catch((err) => remoteUnavailable('Administración del catálogo', err)),
   },
   // The auth portal sends people to /movies after signing in and the navigation map
   // calls it the catalog: it is the start address now.
@@ -108,12 +119,12 @@ export const routes: Routes = [
   // notice; unknown addresses still fall through to the 404 page.
   {
     path: '',
-    title: 'Movies',
+    title: 'Películas',
     loadChildren: () =>
       loadRemoteModule('catalog', './routes')
         .then((m) => m.CATALOG_ROUTES)
-        .catch((err) => remoteUnavailable('Movies', err, '')),
+        .catch((err) => remoteUnavailable('Películas', err, '')),
   },
-  { path: '**', title: 'Page not found', loadComponent: () =>
+  { path: '**', title: 'Página no encontrada', loadComponent: () =>
       import('./layout/not-found.component').then((m) => m.NotFoundComponent) },
 ];
