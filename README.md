@@ -55,6 +55,12 @@ session on the server (`signOut()`, with the access token still set) and then cl
 that call fails; a portal without `signOut()` is just cleared. A `401` from the gateway still clears the
 session and ends the one of the portal, without a server call.
 
+When the session ends the shell moves the person away from a protected page: after the explicit sign out it
+navigates to `/`, and when `isAuthenticated()` goes from true to false in any other way (a `401`, a failed
+renewal in the auth portal) `ShellLayoutComponent` re-runs the guards on the current address, so a protected
+route goes to `/auth/login?returnUrl=...` and a public one stays. It reacts only to that change, so a shell
+that starts without a session (including a failed restore) does not navigate.
+
 ## Per-environment configuration
 
 The image is built once and the same image is promoted from one environment to the next. What
