@@ -73,6 +73,13 @@ describe('routes', () => {
     expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
   });
 
+  it('runs the guards again on every guarded route, so the shell can leave a page when the session ends', () => {
+    const guarded = routes.filter((route) => route.canActivate);
+
+    expect(guarded.length).toBeGreaterThan(0);
+    guarded.forEach((route) => expect(route.runGuardsAndResolvers).withContext(String(route.path)).toBe('always'));
+  });
+
   it('mounts the token sign-in only in development', () => {
     expect(signInRoute(true).loadComponent).toBeDefined();
     expect(signInRoute(false).loadComponent).toBeUndefined();

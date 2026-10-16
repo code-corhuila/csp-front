@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { NavigationStart, provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { authGuard } from '../core/auth/auth.guard';
 import { SessionService } from '../core/auth/session.service';
 import { ShellLayoutComponent } from './shell-layout.component';
 
@@ -130,5 +131,108 @@ describe('ShellLayoutComponent', () => {
     expect(links).not.toContain('/booking/snack-selection');
     expect(links).not.toContain('/admin/concessions');
     expect(links).not.toContain('/admin/reservations');
+  });
+});
+
+describe('ShellLayoutComponent when the session ends', () => {
+  let open: ReturnType<typeof signal<boolean>>;
+  let navigations: string[];
+
+  const startWith = async (authenticated: boolean, signOut?: () => Promise<void>) => {
+    open = signal(authenticated);
+    await TestBed.inject(SessionService).connect(() =>
+      Promise.resolve({ isAuthenticated: open, end: () => open.set(false), hasRole: () => false, signOut }));
+    const router = TestBed.inject(Router);
+    navigations = [];
+    router.events.subscribe((e) => {
+      if (e instanceof NavigationStart) {
+        navigations.push(e.url);
+      }
+    });
+    return RouterTestingHarness.create();
+  };
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          {
+            path: '',
+            component: ShellLayoutComponent,
+            children: [
+              { path: '', component: PageComponent },
+              { path: 'public', component: PageComponent },
+              { path: 'admin/users', component: PageComponent, canActivate: [authGuard], runGuardsAndResolvers: 'always' },
+              { path: 'auth/login', component: PageComponent },
+            ],
+          },
+        ]),
+      ],
+    });
+  });
+  afterEach(() => sessionStorage.clear());
+
+  it('goes to the start page after the explicit sign out, with a single navigation', async () => {
+    const harness = await startWith(true, () => {
+      open.set(false);
+      return Promise.resolve();
+    });
+    await harness.navigateByUrl('/admin/users');
+    navigations.length = 0;
+
+    harness.routeNativeElement!.querySelector<HTMLButtonElement>('.actions button')!.click();
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/');
+    expect(navigations).toEqual(['/']);
+  });
+
+  it('sends a protected page to the login with its return url when the session ends otherwise', async () => {
+    const harness = await startWith(true);
+    await harness.navigateByUrl('/admin/users');
+
+    open.set(false);
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/auth/login?returnUrl=%2Fadmin%2Fusers');
+    expect(navigations).toEqual(['/admin/users', '/admin/users', '/auth/login?returnUrl=%2Fadmin%2Fusers']);
+  });
+
+  it('keeps a public page when the session ends otherwise', async () => {
+    const harness = await startWith(true);
+    await harness.navigateByUrl('/public');
+
+    open.set(false);
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/public');
+  });
+
+  it('does not navigate when the shell starts without a session', async () => {
+    const harness = await startWith(false);
+    await harness.navigateByUrl('/public');
+    navigations.length = 0;
+
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+
+    expect(navigations).toEqual([]);
+  });
+
+  it('does not navigate again when the session stays closed', async () => {
+    const harness = await startWith(true);
+    await harness.navigateByUrl('/public');
+    open.set(false);
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    navigations.length = 0;
+
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+
+    expect(navigations).toEqual([]);
   });
 });
