@@ -66,7 +66,8 @@ that starts without a session (including a failed restore) does not navigate.
 The image is built once and the same image is promoted from one environment to the next. What
 changes per environment comes from the container environment, which renders `config.json`,
 `federation.manifest.json` and the CORS rule when the container starts. The container refuses to
-start if a variable is missing. For `npm start`, `public/config.json` and
+start if a variable is missing, or if `CORS_ALLOWED_ORIGIN_REGEX` does not start with `^` and end with `$`
+(an unanchored regex would also allow longer origins). For `npm start`, `public/config.json` and
 `public/federation.manifest.json` hold the development values. The shell reads `config.json`
 before anything else and does not start without a `gatewayUrl`.
 
