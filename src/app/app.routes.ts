@@ -14,6 +14,13 @@ export const catalogAdminMatcher: UrlMatcher = (segments) =>
     : null;
 
 /**
+ * Matches `/profile` without consuming it: the auth portal declares `profile` as a route of its own `./routes`
+ * entry, so the address of the navigation map stays `/profile` and the portal keeps the page.
+ */
+export const profileMatcher: UrlMatcher = (segments) =>
+  segments.length === 1 && segments[0].path === 'profile' ? { consumed: [] } : null;
+
+/**
  * The paste-a-token sign-in exists only in development (ADR-022); any other
  * build sends the same address to the identity portal's login.
  */
@@ -123,6 +130,18 @@ export const routes: Routes = [
       loadRemoteModule('catalog', './admin-routes')
         .then((m) => m.ADMIN_ROUTES)
         .catch((err) => remoteUnavailable('Administración del catálogo', err)),
+  },
+  // The profile page is declared by the auth portal inside the same entry as login and register, so the
+  // shell consumes nothing and lets the portal match `profile`; the guard protects the page (navigation map).
+  {
+    matcher: profileMatcher,
+    title: 'Mi perfil',
+    canActivate: [authGuard],
+    ...RECHECKED_ON_SAME_URL,
+    loadChildren: () =>
+      loadRemoteModule('auth', './routes')
+        .then((m) => m.AUTH_ROUTES)
+        .catch((err) => remoteUnavailable('Mi perfil', err)),
   },
   // The auth portal sends people to /movies after signing in and the navigation map
   // calls it the catalog: it is the start address now.

@@ -114,6 +114,7 @@ describe('ShellLayoutComponent', () => {
     const links = () => Array.from(harness.routeNativeElement!.querySelectorAll('nav a')).map(a => a.getAttribute('href'));
 
     expect(links()).toContain('/booking/snack-selection');
+    expect(links()).toContain('/profile');
     expect(links()).not.toContain('/admin/concessions');
     ['/admin/reservations', '/admin/users', '/admin/billboard', '/admin/movies', '/admin/rooms'].forEach((href) => expect(links()).not.toContain(href));
 
@@ -129,6 +130,7 @@ describe('ShellLayoutComponent', () => {
     const links = Array.from(harness.routeNativeElement!.querySelectorAll('nav a')).map(a => a.getAttribute('href'));
 
     expect(links).not.toContain('/booking/snack-selection');
+    expect(links).not.toContain('/profile');
     expect(links).not.toContain('/admin/concessions');
     expect(links).not.toContain('/admin/reservations');
   });
