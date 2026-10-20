@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, UrlSegment, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { catalogAdminMatcher, routes, signInRoute } from './app.routes';
+import { catalogAdminMatcher, profileMatcher, routes, signInRoute } from './app.routes';
 import { SessionService } from './core/auth/session.service';
 import { registerFakeRemote } from './testing/fake-remote';
 
@@ -179,6 +179,39 @@ describe('routes', () => {
     expect(catalogAdminMatcher(segments('booking', 'movies'), {} as never, {} as never)).toBeNull();
   });
 
+  it('sends /profile without session to the auth login with the returnUrl', async () => {
+    await RouterTestingHarness.create('/profile');
+
+    expect(TestBed.inject(Router).url).toBe('/auth/login?returnUrl=%2Fprofile');
+  });
+
+  it('shows its own notice at /profile when the auth portal is down', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/profile');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Mi perfil no está disponible en este momento');
+  });
+
+  it('keeps the 404 page for an address below /profile', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/profile/unknown');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
+  });
+
+  it('declares the profile entry only for the single segment profile, without consuming it', () => {
+    const segments = (...paths: string[]) => paths.map((path) => new UrlSegment(path, {}));
+
+    expect(profileMatcher(segments('profile'), {} as never, {} as never)?.consumed).toEqual([]);
+    expect(profileMatcher(segments('profile', 'unknown'), {} as never, {} as never)).toBeNull();
+    expect(profileMatcher(segments('auth', 'profile'), {} as never, {} as never)).toBeNull();
+    expect(profileMatcher([], {} as never, {} as never)).toBeNull();
+  });
+
   describe('with every portal available', () => {
     const portals: { remote: string; exposed: string; routes: string; address: string }[] = [
       { remote: 'auth', exposed: './routes', routes: 'AUTH_ROUTES', address: '/auth' },
@@ -190,6 +223,21 @@ describe('routes', () => {
       { remote: 'auth', exposed: './admin-routes', routes: 'ADMIN_ROUTES', address: '/admin/users' },
       { remote: 'catalog', exposed: './routes', routes: 'CATALOG_ROUTES', address: '/' },
     ];
+
+    it('mounts /profile with the profile page of the auth portal', async () => {
+      const unregister = registerFakeRemote('auth', './routes', "export const AUTH_ROUTES = [{ path: 'login', children: [] }, { path: 'profile', children: [] }];");
+      TestBed.inject(SessionService).set('abc');
+      spyOn(console, 'error');
+
+      try {
+        await RouterTestingHarness.create('/profile');
+
+        expect(TestBed.inject(Router).url).toBe('/profile');
+        expect(console.error).not.toHaveBeenCalled();
+      } finally {
+        unregister();
+      }
+    });
 
     portals.forEach(({ remote, exposed, routes: exportName, address }) => {
       it(`mounts ${address} with the ${exportName} of the ${remote} portal`, async () => {
