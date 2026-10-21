@@ -18,6 +18,7 @@ import { SessionService } from '../core/auth/session.service';
         <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">Mis boletas</a>
         @if (session.isAuthenticated()) {
           <a routerLink="/booking/snack-selection" routerLinkActive="active" ariaCurrentWhenActive="page">Confitería</a>
+          <a routerLink="/profile" routerLinkActive="active" ariaCurrentWhenActive="page">Mi perfil</a>
         }
         @if (session.hasRole('ADMIN')) {
           <a routerLink="/admin/concessions" routerLinkActive="active" ariaCurrentWhenActive="page">Concesiones</a>
