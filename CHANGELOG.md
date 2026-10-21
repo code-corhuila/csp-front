@@ -8,6 +8,8 @@ and is tagged `v<version>` once it is merged.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-20
+
 ### Fixed
 
 - A protected page no longer stays on screen after the session ends (HU-AUTH-003, [csp-front#54](https://github.com/code-corhuila/csp-front/issues/54)): the explicit "Cerrar sesión" navigates to the start page, and a session that ends any other way (a `401`, a failed renewal in the auth portal) re-runs the route guards on the current address, so a protected route goes to `/auth/login?returnUrl=...` and a public one stays. Nothing navigates when the shell starts without a session.
