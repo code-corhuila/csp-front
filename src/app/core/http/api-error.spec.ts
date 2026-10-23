@@ -60,4 +60,31 @@ describe('toApiError', () => {
     expect(message(429)).toContain('Demasiadas solicitudes');
     expect(message(500)).toContain('no está disponible en este momento');
   });
+
+  describe('retryAfterSeconds', () => {
+    const rateLimited = (retryAfter?: string) =>
+      toApiError(
+        new HttpErrorResponse({
+          status: 429,
+          headers: retryAfter === undefined ? undefined : new HttpHeaders({ 'Retry-After': retryAfter }),
+        }),
+        'corr-1',
+      );
+
+    it('reads the seconds of the Retry-After header', () => {
+      expect(rateLimited('1').retryAfterSeconds).toBe(1);
+      expect(rateLimited('300').retryAfterSeconds).toBe(300);
+      expect(rateLimited(' 45 ').retryAfterSeconds).toBe(45);
+    });
+
+    it('ignores a missing, empty, non positive, fractional or non numeric value', () => {
+      for (const value of [undefined, '', '0', '-5', '1.5', 'abc', '10s', 'Wed, 21 Oct 2026 07:28:00 GMT']) {
+        expect(rateLimited(value).retryAfterSeconds).toBeUndefined();
+      }
+    });
+
+    it('keeps the generic message of the 429', () => {
+      expect(rateLimited('300').userMessage).toContain('Demasiadas solicitudes');
+    });
+  });
 });
