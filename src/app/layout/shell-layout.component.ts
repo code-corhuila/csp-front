@@ -13,7 +13,6 @@ import { SessionService } from '../core/auth/session.service';
       </a>
       <nav aria-label="Principal">
         <a routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">Películas</a>
-        <a routerLink="/auth" routerLinkActive="active" ariaCurrentWhenActive="page">Mi cuenta</a>
         <a routerLink="/booking" routerLinkActive="active" ariaCurrentWhenActive="page">Reservas</a>
         <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">Mis boletas</a>
         @if (session.isAuthenticated()) {
