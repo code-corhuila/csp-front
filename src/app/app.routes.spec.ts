@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, UrlSegment, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { catalogAdminMatcher, routes, signInRoute } from './app.routes';
+import { catalogAdminMatcher, profileMatcher, routes, signInRoute } from './app.routes';
 import { SessionService } from './core/auth/session.service';
 import { registerFakeRemote } from './testing/fake-remote';
 
@@ -18,7 +18,7 @@ describe('routes', () => {
   it('shows the 404 page for an address that does not exist', async () => {
     const harness = await RouterTestingHarness.create('/does-not-exist');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
   });
 
   it('shows the notice at the start address when the catalog portal cannot be loaded', async () => {
@@ -26,7 +26,7 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Movies is not available right now');
+    expect(harness.routeNativeElement?.textContent).toContain('Películas no está disponible en este momento');
   });
 
   it('keeps the 404 page for unknown addresses while the catalog portal is down', async () => {
@@ -35,8 +35,8 @@ describe('routes', () => {
 
     await harness.navigateByUrl('/does-not-exist');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
-    expect(harness.routeNativeElement?.textContent).not.toContain('Movies is not available');
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
+    expect(harness.routeNativeElement?.textContent).not.toContain('Películas no está disponible');
   });
 
   it('sends /movies to the start address, where the auth portal lands after signing in', async () => {
@@ -59,7 +59,7 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/booking');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Booking is not available right now');
+    expect(harness.routeNativeElement?.textContent).toContain('Reservas no está disponible en este momento');
     expect(console.error).toHaveBeenCalled();
   });
 
@@ -70,7 +70,14 @@ describe('routes', () => {
 
     await harness.navigateByUrl('/does-not-exist');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
+  });
+
+  it('runs the guards again on every guarded route, so the shell can leave a page when the session ends', () => {
+    const guarded = routes.filter((route) => route.canActivate);
+
+    expect(guarded.length).toBeGreaterThan(0);
+    guarded.forEach((route) => expect(route.runGuardsAndResolvers).withContext(String(route.path)).toBe('always'));
   });
 
   it('mounts the token sign-in only in development', () => {
@@ -91,7 +98,7 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/booking/snack-selection');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Snacks is not available right now');
+    expect(harness.routeNativeElement?.textContent).toContain('Confitería no está disponible en este momento');
   });
 
   it('sends a signed-in person without the ADMIN role from the concessions admin to the start address', async () => {
@@ -104,7 +111,7 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/');
   });
 
-  const adminAddresses = ['/admin/reservations', '/admin/billboard', '/admin/movies', '/admin/rooms', '/admin/reports'];
+  const adminAddresses = ['/admin/reservations', '/admin/users', '/admin/billboard', '/admin/movies', '/admin/rooms', '/admin/reports'];
 
   adminAddresses.forEach((address) => {
     it(`sends ${address} without session to the auth login with the returnUrl`, async () => {
@@ -130,7 +137,16 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/admin/reservations');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Reservations is not available right now');
+    expect(harness.routeNativeElement?.textContent).toContain('Todas las reservas no está disponible en este momento');
+  });
+
+  it('shows its own notice at /admin/users when the auth portal is down', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/admin/users');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Roles de usuarios no está disponible en este momento');
   });
 
   ['billboard', 'movies', 'rooms', 'reports'].forEach((area) => {
@@ -140,7 +156,7 @@ describe('routes', () => {
 
       const harness = await RouterTestingHarness.create(`/admin/${area}`);
 
-      expect(harness.routeNativeElement?.textContent).toContain('Catalog administration is not available right now');
+      expect(harness.routeNativeElement?.textContent).toContain('Administración del catálogo no está disponible en este momento');
     });
   });
   it('keeps the 404 page for an /admin address that is not an administration area', async () => {
@@ -149,7 +165,7 @@ describe('routes', () => {
 
     const harness = await RouterTestingHarness.create('/admin/unknown');
 
-    expect(harness.routeNativeElement?.textContent).toContain('Page not found');
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
   });
 
   it('declares the catalog administration only for billboard, movies, rooms and reports', () => {
@@ -163,6 +179,39 @@ describe('routes', () => {
     expect(catalogAdminMatcher(segments('booking', 'movies'), {} as never, {} as never)).toBeNull();
   });
 
+  it('sends /profile without session to the auth login with the returnUrl', async () => {
+    await RouterTestingHarness.create('/profile');
+
+    expect(TestBed.inject(Router).url).toBe('/auth/login?returnUrl=%2Fprofile');
+  });
+
+  it('shows its own notice at /profile when the auth portal is down', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/profile');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Mi perfil no está disponible en este momento');
+  });
+
+  it('keeps the 404 page for an address below /profile', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/profile/unknown');
+
+    expect(harness.routeNativeElement?.textContent).toContain('Página no encontrada');
+  });
+
+  it('declares the profile entry only for the single segment profile, without consuming it', () => {
+    const segments = (...paths: string[]) => paths.map((path) => new UrlSegment(path, {}));
+
+    expect(profileMatcher(segments('profile'), {} as never, {} as never)?.consumed).toEqual([]);
+    expect(profileMatcher(segments('profile', 'unknown'), {} as never, {} as never)).toBeNull();
+    expect(profileMatcher(segments('auth', 'profile'), {} as never, {} as never)).toBeNull();
+    expect(profileMatcher([], {} as never, {} as never)).toBeNull();
+  });
+
   describe('with every portal available', () => {
     const portals: { remote: string; exposed: string; routes: string; address: string }[] = [
       { remote: 'auth', exposed: './routes', routes: 'AUTH_ROUTES', address: '/auth' },
@@ -171,8 +220,24 @@ describe('routes', () => {
       { remote: 'ticketing', exposed: './routes', routes: 'TICKETING_ROUTES', address: '/dashboard' },
       { remote: 'concessions', exposed: './routes', routes: 'CONCESSIONS_ROUTES', address: '/admin/concessions' },
       { remote: 'booking', exposed: './admin-routes', routes: 'ADMIN_ROUTES', address: '/admin/reservations' },
+      { remote: 'auth', exposed: './admin-routes', routes: 'ADMIN_ROUTES', address: '/admin/users' },
       { remote: 'catalog', exposed: './routes', routes: 'CATALOG_ROUTES', address: '/' },
     ];
+
+    it('mounts /profile with the profile page of the auth portal', async () => {
+      const unregister = registerFakeRemote('auth', './routes', "export const AUTH_ROUTES = [{ path: 'login', children: [] }, { path: 'profile', children: [] }];");
+      TestBed.inject(SessionService).set('abc');
+      spyOn(console, 'error');
+
+      try {
+        await RouterTestingHarness.create('/profile');
+
+        expect(TestBed.inject(Router).url).toBe('/profile');
+        expect(console.error).not.toHaveBeenCalled();
+      } finally {
+        unregister();
+      }
+    });
 
     portals.forEach(({ remote, exposed, routes: exportName, address }) => {
       it(`mounts ${address} with the ${exportName} of the ${remote} portal`, async () => {

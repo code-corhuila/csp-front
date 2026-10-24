@@ -40,16 +40,34 @@ open these areas (ADR-027):
 | `/booking/snack-selection` | `concessions` `./snack-routes` | any signed-in person |
 | `/booking`, `/dashboard` | `booking`, `ticketing` `./routes` | any signed-in person |
 | `/admin/concessions` | `concessions` `./routes` | role `ADMIN` |
+| `/admin/users` | `auth` `./admin-routes` | role `ADMIN` |
 
 The development token of `/sign-in` counts as every role. Neither is real security yet: no token is
 validated, and the role comes from the synthetic users of the auth portal.
+
+A reload keeps the session: the shell connects the session of the auth portal in an application
+initializer and, if the portal exposes `restore()`, waits for it before the first navigation, so the
+route guards read the restored session (reloading `/admin/users` with a valid refresh token stays
+there; without a session it goes to `/auth/login?returnUrl=...`). The wait is bounded by 10 seconds,
+and a portal that is unreachable, fails to restore or has no `restore()` lets the shell start without
+a session. The explicit "Cerrar sesión" button calls `SessionService.signOut()`, which asks the portal to close the
+session on the server (`signOut()`, with the access token still set) and then clears everything, even if
+that call fails; a portal without `signOut()` is just cleared. A `401` from the gateway still clears the
+session and ends the one of the portal, without a server call.
+
+When the session ends the shell moves the person away from a protected page: after the explicit sign out it
+navigates to `/`, and when `isAuthenticated()` goes from true to false in any other way (a `401`, a failed
+renewal in the auth portal) `ShellLayoutComponent` re-runs the guards on the current address, so a protected
+route goes to `/auth/login?returnUrl=...` and a public one stays. It reacts only to that change, so a shell
+that starts without a session (including a failed restore) does not navigate.
 
 ## Per-environment configuration
 
 The image is built once and the same image is promoted from one environment to the next. What
 changes per environment comes from the container environment, which renders `config.json`,
 `federation.manifest.json` and the CORS rule when the container starts. The container refuses to
-start if a variable is missing. For `npm start`, `public/config.json` and
+start if a variable is missing, or if `CORS_ALLOWED_ORIGIN_REGEX` does not start with `^` and end with `$`
+(an unanchored regex would also allow longer origins). For `npm start`, `public/config.json` and
 `public/federation.manifest.json` hold the development values. The shell reads `config.json`
 before anything else and does not start without a `gatewayUrl`.
 

@@ -42,3 +42,20 @@ jobs:
 
       - name: Build container image
         run: docker build --file deploy/Dockerfile --tag csp-front:ci .
+
+      - name: Check the CORS rule of the image
+        run: |
+          # The portals load config.json and the manifest of the shell from another origin (ADR-026): the image must
+          # answer the allowed origin, stay silent for any other, and refuse to start with an empty or unanchored rule.
+          base="-e GATEWAY_URL=http://localhost:8000 -e AUTH_REMOTE_URL=http://localhost:4201/remoteEntry.json -e BOOKING_REMOTE_URL=http://localhost:4202/remoteEntry.json -e CATALOG_REMOTE_URL=http://localhost:4203/remoteEntry.json -e CONCESSIONS_REMOTE_URL=http://localhost:4204/remoteEntry.json -e TICKETING_REMOTE_URL=http://localhost:4205/remoteEntry.json"
+          ! docker run --rm $base csp-front:ci
+          ! docker run --rm $base -e 'CORS_ALLOWED_ORIGIN_REGEX=' csp-front:ci
+          ! docker run --rm $base -e 'CORS_ALLOWED_ORIGIN_REGEX=http://localhost:4200' csp-front:ci
+          ! docker run --rm $base -e 'CORS_ALLOWED_ORIGIN_REGEX=^http://localhost:4200' csp-front:ci
+          docker run -d --name shell -p 8080:80 $base -e 'CORS_ALLOWED_ORIGIN_REGEX=^http://localhost:420[0-5]$' csp-front:ci
+          for i in $(seq 1 20); do curl -fs http://localhost:8080/health >/dev/null && break; sleep 1; done
+          for file in config.json federation.manifest.json; do
+            curl -fsD - -o /dev/null -H 'Origin: http://localhost:4200' "http://localhost:8080/$file" | grep -i '^access-control-allow-origin: http://localhost:4200'
+            ! curl -fsD - -o /dev/null -H 'Origin: http://evil.example' "http://localhost:8080/$file" | grep -i '^access-control-allow-origin'
+          done
+          docker rm -f shell

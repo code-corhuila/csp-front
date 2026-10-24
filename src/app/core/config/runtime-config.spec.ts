@@ -22,12 +22,12 @@ describe('loadRuntimeConfig', () => {
   });
 
   it('fails when gatewayUrl is missing', async () => {
-    await expectAsync(loadRuntimeConfig(answer({}))).toBeRejectedWithError(/no "gatewayUrl"/);
+    await expectAsync(loadRuntimeConfig(answer({}))).toBeRejectedWithError(/no tiene "gatewayUrl"/);
   });
 
   it('fails when gatewayUrl is blank', async () => {
     await expectAsync(loadRuntimeConfig(answer({ gatewayUrl: ' ' }))).toBeRejectedWithError(
-      /no "gatewayUrl"/,
+      /no tiene "gatewayUrl"/,
     );
   });
 
