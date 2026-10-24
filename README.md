@@ -9,7 +9,9 @@ Angular 21 (zoneless, signals) · Native Federation 21 · Node 22 LTS or 24.
 
 The shell owns everything that must exist **exactly once**: the single `HttpClient` with its
 interceptor, the session and the gateway URL. Domain portals are loaded as routes inside the
-shell's injector and never call `provideHttpClient()`.
+shell's injector and never call `provideHttpClient()`. That client sends its requests with the
+Fetch API (`withFetch()`), so the `keepalive` option of a portal request (for example the logout)
+takes effect.
 
 ## Visual identity
 
