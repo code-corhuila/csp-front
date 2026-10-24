@@ -17,6 +17,8 @@ export interface ApiError {
   details: FieldError[];
   traceId: string;
   userMessage: string;
+  /** Seconds left of a lock (429 with Retry-After); absent when the server did not say. */
+  retryAfterSeconds?: number;
 }
 
 export function toApiError(err: HttpErrorResponse, correlationId: string): ApiError {
@@ -30,7 +32,19 @@ export function toApiError(err: HttpErrorResponse, correlationId: string): ApiEr
     details: envelope.details ?? [],
     traceId,
   };
-  return { ...base, userMessage: describe(base.status, base.code, base.message, traceId) };
+  const retryAfterSeconds = parseRetryAfter(err.headers?.get('Retry-After'));
+  const userMessage = describe(base.status, base.code, base.message, traceId);
+  return retryAfterSeconds === undefined
+    ? { ...base, userMessage }
+    : { ...base, userMessage, retryAfterSeconds };
+}
+
+/** Only whole seconds of at least 1; an HTTP-date or anything else is ignored. */
+function parseRetryAfter(value: string | null | undefined): number | undefined {
+  const text = value?.trim() ?? '';
+  if (!/^\d+$/.test(text)) return undefined;
+  const seconds = Number(text);
+  return seconds >= 1 ? seconds : undefined;
 }
 
 function describe(status: number, code: string, message: string, traceId: string): string {
