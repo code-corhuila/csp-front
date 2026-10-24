@@ -45,7 +45,7 @@ describe('toApiError', () => {
     const error = toApiError(new HttpErrorResponse({ status: 0 }), 'corr-1');
 
     expect(error.code).toBe('NETWORK_ERROR');
-    expect(error.userMessage).toContain('cannot be reached');
+    expect(error.userMessage).toContain('No se pudo contactar');
     expect(error.userMessage).toContain('corr-1');
   });
 
@@ -53,11 +53,38 @@ describe('toApiError', () => {
     const message = (status: number) =>
       toApiError(new HttpErrorResponse({ status }), 'corr-1').userMessage;
 
-    expect(message(400)).toContain('not valid');
-    expect(message(401)).toContain('session has expired');
-    expect(message(403)).toContain('not allowed');
-    expect(message(404)).toContain('does not exist');
-    expect(message(429)).toContain('Too many requests');
-    expect(message(500)).toContain('not available right now');
+    expect(message(400)).toContain('no son válidos');
+    expect(message(401)).toContain('sesión ha expirado');
+    expect(message(403)).toContain('No tienes permiso');
+    expect(message(404)).toContain('No existe');
+    expect(message(429)).toContain('Demasiadas solicitudes');
+    expect(message(500)).toContain('no está disponible en este momento');
+  });
+
+  describe('retryAfterSeconds', () => {
+    const rateLimited = (retryAfter?: string) =>
+      toApiError(
+        new HttpErrorResponse({
+          status: 429,
+          headers: retryAfter === undefined ? undefined : new HttpHeaders({ 'Retry-After': retryAfter }),
+        }),
+        'corr-1',
+      );
+
+    it('reads the seconds of the Retry-After header', () => {
+      expect(rateLimited('1').retryAfterSeconds).toBe(1);
+      expect(rateLimited('300').retryAfterSeconds).toBe(300);
+      expect(rateLimited(' 45 ').retryAfterSeconds).toBe(45);
+    });
+
+    it('ignores a missing, empty, non positive, fractional or non numeric value', () => {
+      for (const value of [undefined, '', '0', '-5', '1.5', 'abc', '10s', 'Wed, 21 Oct 2026 07:28:00 GMT']) {
+        expect(rateLimited(value).retryAfterSeconds).toBeUndefined();
+      }
+    });
+
+    it('keeps the generic message of the 429', () => {
+      expect(rateLimited('300').userMessage).toContain('Demasiadas solicitudes');
+    });
   });
 });
