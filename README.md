@@ -61,6 +61,10 @@ renewal in the auth portal) `ShellLayoutComponent` re-runs the guards on the cur
 route goes to `/auth/login?returnUrl=...` and a public one stays. It reacts only to that change, so a shell
 that starts without a session (including a failed restore) does not navigate.
 
+The login and register pages are for visitors: `guestGuard` on the `auth` route sends a signed-in person who opens
+`/auth`, `/auth/login` or `/auth/register` to `/`. The other pages of the portal (forgot and reset password, profile)
+stay reachable with or without a session, and the navigation has no "Mi cuenta" link (HU-AUTH-007).
+
 ## Per-environment configuration
 
 The image is built once and the same image is promoted from one environment to the next. What

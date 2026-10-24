@@ -9,6 +9,9 @@ import { ShellLayoutComponent } from './shell-layout.component';
 @Component({ selector: 'app-page', template: '<p>page</p>' })
 class PageComponent {}
 
+const navLabels = (harness: RouterTestingHarness) =>
+  Array.from(harness.routeNativeElement!.querySelectorAll('nav a')).map((a) => a.textContent);
+
 describe('ShellLayoutComponent', () => {
   beforeEach(() => {
     sessionStorage.clear();
@@ -27,9 +30,30 @@ describe('ShellLayoutComponent', () => {
     const nav: HTMLElement = harness.routeNativeElement!.querySelector('nav')!;
 
     expect(Array.from(nav.querySelectorAll('a')).map((a) => a.textContent)).toEqual([
-      'Películas', 'Mi cuenta', 'Reservas', 'Mis boletas',
+      'Películas', 'Reservas', 'Mis boletas',
     ]);
     expect(harness.routeNativeElement!.querySelector('.brand')?.textContent).toContain('CineSync');
+  });
+
+  it('has no "Mi cuenta" option for a visitor', async () => {
+    const harness = await RouterTestingHarness.create('/');
+
+    expect(navLabels(harness)).not.toContain('Mi cuenta');
+  });
+
+  it('has no "Mi cuenta" option for a client or an administrator, and keeps "Mi perfil"', async () => {
+    TestBed.inject(SessionService).set('abc');
+    const harness = await RouterTestingHarness.create('/');
+
+    expect(navLabels(harness)).not.toContain('Mi cuenta');
+    expect(navLabels(harness)).toContain('Mi perfil');
+    expect(navLabels(harness)).toContain('Roles de usuarios');
+  });
+
+  it('shows "Mi perfil" only to a signed-in person', async () => {
+    const harness = await RouterTestingHarness.create('/');
+
+    expect(harness.routeNativeElement!.querySelector('nav a[href="/profile"]')).toBeNull();
   });
 
   it('marks the movies link as active at the start address', async () => {

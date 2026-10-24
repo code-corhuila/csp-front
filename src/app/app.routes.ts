@@ -1,7 +1,7 @@
 import { loadRemoteModule } from '@angular-architects/native-federation';
 import { isDevMode } from '@angular/core';
 import { Route, Routes, UrlMatcher } from '@angular/router';
-import { authGuard, roleGuard } from './core/auth/auth.guard';
+import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guard';
 import { remoteUnavailable } from './core/errors/remote-unavailable.component';
 
 /** The administration areas of the catalog in `12-ux-ui/navigation-map.md`: /admin/billboard, /admin/movies, /admin/rooms, /admin/reports. */
@@ -48,6 +48,8 @@ export const routes: Routes = [
   {
     path: 'auth',
     title: 'Autenticación',
+    canActivate: [guestGuard],
+    ...RECHECKED_ON_SAME_URL,
     loadChildren: () =>
       loadRemoteModule('auth', './routes')
         .then((m) => m.AUTH_ROUTES)

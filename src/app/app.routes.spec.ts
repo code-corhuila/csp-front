@@ -53,6 +53,37 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/auth/login?returnUrl=%2Fbooking');
   });
 
+  it('sends a signed-in person from the login and register pages to the start address', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    const harness = await RouterTestingHarness.create('/auth');
+    expect(TestBed.inject(Router).url).toBe('/');
+
+    for (const address of ['/auth/login', '/auth/register']) {
+      await harness.navigateByUrl(address);
+
+      expect(TestBed.inject(Router).url).toBe('/');
+    }
+  });
+
+  it('keeps the login page for a visitor and the reset page for a signed-in person', async () => {
+    spyOn(console, 'error');
+    const unregister = registerFakeRemote('auth', './routes',
+      "export const AUTH_ROUTES = [{ path: 'login', children: [] }, { path: 'reset-password', children: [] }];");
+
+    try {
+      const harness = await RouterTestingHarness.create('/auth/login');
+      expect(TestBed.inject(Router).url).toBe('/auth/login');
+
+      TestBed.inject(SessionService).set('abc');
+      await harness.navigateByUrl('/auth/reset-password?token=abc');
+      expect(TestBed.inject(Router).url).toBe('/auth/reset-password?token=abc');
+    } finally {
+      unregister();
+    }
+  });
+
   it('replaces only the area of a portal that cannot be loaded with a notice', async () => {
     spyOn(console, 'error');
     TestBed.inject(SessionService).set('abc');
@@ -214,7 +245,6 @@ describe('routes', () => {
 
   describe('with every portal available', () => {
     const portals: { remote: string; exposed: string; routes: string; address: string }[] = [
-      { remote: 'auth', exposed: './routes', routes: 'AUTH_ROUTES', address: '/auth' },
       { remote: 'concessions', exposed: './snack-routes', routes: 'SNACK_ROUTES', address: '/booking/snack-selection' },
       { remote: 'booking', exposed: './routes', routes: 'BOOKING_ROUTES', address: '/booking' },
       { remote: 'ticketing', exposed: './routes', routes: 'TICKETING_ROUTES', address: '/dashboard' },
@@ -233,6 +263,20 @@ describe('routes', () => {
         await RouterTestingHarness.create('/profile');
 
         expect(TestBed.inject(Router).url).toBe('/profile');
+        expect(console.error).not.toHaveBeenCalled();
+      } finally {
+        unregister();
+      }
+    });
+
+    it('mounts /auth with the AUTH_ROUTES of the auth portal for a visitor', async () => {
+      const unregister = registerFakeRemote('auth', './routes', "export const AUTH_ROUTES = [{ path: '', children: [] }];");
+      spyOn(console, 'error');
+
+      try {
+        await RouterTestingHarness.create('/auth');
+
+        expect(TestBed.inject(Router).url).toBe('/auth');
         expect(console.error).not.toHaveBeenCalled();
       } finally {
         unregister();
