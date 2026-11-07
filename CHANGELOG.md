@@ -11,6 +11,7 @@ and is tagged `v<version>` once it is merged.
 ### Fixed
 
 - The shell's HTTP client uses the Fetch API (`provideHttpClient(withFetch(), ...)`) so the `keepalive` option of a portal request is honoured: XHR ignores it, and the logout of the auth portal was cancelled when the page navigated right after the click (HU-AUTH-003, [csp-front#72](https://github.com/code-corhuila/csp-front/issues/72)). The interceptor and the `ApiError` mapping are unchanged: a failed fetch is still status `0` / `NETWORK_ERROR`.
+- The shell entry document and SPA fallback are served with `Cache-Control: no-store`, so a deployment cannot leave the browser using a previous shell ([csp-front#35](https://github.com/code-corhuila/csp-front/issues/35)). Hashed assets remain cacheable as immutable resources.
 - The navigation no longer has the "Mi cuenta" option, and a signed-in person who opens `/auth`, `/auth/login` or `/auth/register` goes to the start address instead of seeing the login form again (HU-AUTH-007, [csp-front#69](https://github.com/code-corhuila/csp-front/issues/69)). The new `guestGuard` protects the `auth` route only for those three addresses: forgot and reset password and the profile stay reachable for anyone.
 - The container refuses to start when `CORS_ALLOWED_ORIGIN_REGEX` does not start with `^` and end with `$`, and the CI builds the image and checks the CORS rule: the allowed origin is answered, a foreign origin is not, and an empty or an unanchored value does not start (ADR-026 Amendment 2026-10-19, [csp-front#57](https://github.com/code-corhuila/csp-front/issues/57)).
 - A protected page no longer stays on screen after the session ends (HU-AUTH-003, [csp-front#54](https://github.com/code-corhuila/csp-front/issues/54)): the explicit "Cerrar sesión" navigates to the start page, and a session that ends any other way (a `401`, a failed renewal in the auth portal) re-runs the route guards on the current address, so a protected route goes to `/auth/login?returnUrl=...` and a public one stays. Nothing navigates when the shell starts without a session.
@@ -61,7 +62,6 @@ look of the design system (HU-UI-001, [csp-docs#1](https://github.com/code-corhu
 ### Known limits
 
 - `/admin/reports` is mounted, but nothing links to it: the shell navigation has no Reports link and the menu of the catalog administration shows Reportes disabled, so it opens only by address. The screen is mock-only (no backend requirement in the navigation map).
-- `deploy/nginx.conf` serves `index.html` without `Cache-Control`, so a browser can keep the previous shell after a deployment ([#35](https://github.com/code-corhuila/csp-front/issues/35)).
 - The role guard and the session read from the auth portal are client-side checks that decide what the interface shows; they are not a security boundary until a backend enforces them.
 - The Cut 2 portals work with synthetic data: the integration checks of this release ran without the gateway (`GATEWAY_URL`), so no call through it was exercised.
 - The shell maps HTTP errors to its own `ApiError` (`src/app/core/http/api-error.ts`), but the contract shared between the shell and the portals
