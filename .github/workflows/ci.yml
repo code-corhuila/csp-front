@@ -43,7 +43,7 @@ jobs:
       - name: Build container image
         run: docker build --file deploy/Dockerfile --tag csp-front:ci .
 
-      - name: Check the CORS rule of the image
+      - name: Check the cache and CORS rules of the image
         run: |
           # The portals load config.json and the manifest of the shell from another origin (ADR-026): the image must
           # answer the allowed origin, stay silent for any other, and refuse to start with an empty or unanchored rule.
@@ -57,5 +57,8 @@ jobs:
           for file in config.json federation.manifest.json; do
             curl -fsD - -o /dev/null -H 'Origin: http://localhost:4200' "http://localhost:8080/$file" | grep -i '^access-control-allow-origin: http://localhost:4200'
             ! curl -fsD - -o /dev/null -H 'Origin: http://evil.example' "http://localhost:8080/$file" | grep -i '^access-control-allow-origin'
+          done
+          for path in / /route-that-does-not-exist; do
+            curl -fsD - -o /dev/null "http://localhost:8080$path" | grep -i '^cache-control: no-store'
           done
           docker rm -f shell
