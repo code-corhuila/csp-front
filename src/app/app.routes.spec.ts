@@ -117,6 +117,21 @@ describe('routes', () => {
     expect(signInRoute(false).redirectTo).toBe('auth/login');
   });
 
+  it('sends the address of the ticket email, /dashboard/tickets, to Mis boletas', async () => {
+    spyOn(console, 'error');
+    TestBed.inject(SessionService).set('abc');
+
+    await RouterTestingHarness.create('/dashboard/tickets');
+
+    expect(TestBed.inject(Router).url).toBe('/dashboard');
+  });
+
+  it('sends /dashboard/tickets without session to the auth login and back to Mis boletas', async () => {
+    await RouterTestingHarness.create('/dashboard/tickets');
+
+    expect(TestBed.inject(Router).url).toBe('/auth/login?returnUrl=%2Fdashboard');
+  });
+
   it('sends the customer snack step without session to the auth login with the returnUrl', async () => {
     await RouterTestingHarness.create('/booking/snack-selection');
 
