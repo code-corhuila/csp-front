@@ -78,6 +78,12 @@ export const routes: Routes = [
         .catch((err) => remoteUnavailable('Reservas', err)),
   },
   {
+    // The ticket email links to /dashboard/tickets (ADR-058, HU-TICKETING-002); the tickets of the person live at /dashboard.
+    path: 'dashboard/tickets',
+    redirectTo: 'dashboard',
+    pathMatch: 'full',
+  },
+  {
     path: 'dashboard',
     title: 'Mis boletas',
     canActivate: [authGuard],
