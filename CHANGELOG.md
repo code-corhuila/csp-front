@@ -12,6 +12,7 @@ and is tagged `v<version>` once it is merged.
 
 ### Fixed
 
+- The shell answers the address that the ticket email links to, `/dashboard/tickets` (ADR-058, HU-TICKETING-002, HU-FE-TICKETING-002): it sends it to `/dashboard`, where "Mis boletas" lives, instead of the 404 page. Without a session the person signs in first and comes back to their tickets.
 - The shell's HTTP client uses the Fetch API (`provideHttpClient(withFetch(), ...)`) so the `keepalive` option of a portal request is honoured: XHR ignores it, and the logout of the auth portal was cancelled when the page navigated right after the click (HU-AUTH-003, [csp-front#72](https://github.com/code-corhuila/csp-front/issues/72)). The interceptor and the `ApiError` mapping are unchanged: a failed fetch is still status `0` / `NETWORK_ERROR`.
 - The shell entry document and SPA fallback are served with `Cache-Control: no-store`, so a deployment cannot leave the browser using a previous shell ([csp-front#35](https://github.com/code-corhuila/csp-front/issues/35)). Hashed assets remain cacheable as immutable resources.
 - The navigation no longer has the "Mi cuenta" option, and a signed-in person who opens `/auth`, `/auth/login` or `/auth/register` goes to the start address instead of seeing the login form again (HU-AUTH-007, [csp-front#69](https://github.com/code-corhuila/csp-front/issues/69)). The new `guestGuard` protects the `auth` route only for those three addresses: forgot and reset password and the profile stay reachable for anyone.
