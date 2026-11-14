@@ -19,6 +19,16 @@ if [ -n "$missing" ]; then
   exit 1
 fi
 
+# An unanchored value would also match longer origins (http://localhost:4200.evil.example), because
+# "~" in an nginx map matches a substring.
+case "$CORS_ALLOWED_ORIGIN_REGEX" in
+  '^'*'$') ;;
+  *)
+    echo "csp-front: CORS_ALLOWED_ORIGIN_REGEX must start with ^ and end with \$ (ADR-026)" >&2
+    exit 1
+    ;;
+esac
+
 variables=""
 for name in $REQUIRED; do
   variables="$variables \${$name}"

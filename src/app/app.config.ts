@@ -1,4 +1,4 @@
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import {
   ApplicationConfig,
   inject,
@@ -16,7 +16,8 @@ import { apiInterceptor } from './core/http/api.interceptor';
 
 /**
  * Contains the ONLY provideHttpClient() of the whole application. Portals loaded as routes
- * inherit this client and its interceptor; they must never provide their own.
+ * inherit this client and its interceptor; they must never provide their own. It uses the Fetch API
+ * (`withFetch()`) because XHR ignores `keepalive`, which the portals set so a request survives a navigation.
  */
 export function buildAppConfig(config: RuntimeConfig): ApplicationConfig {
   return {
@@ -24,7 +25,7 @@ export function buildAppConfig(config: RuntimeConfig): ApplicationConfig {
       { provide: RUNTIME_CONFIG, useValue: config },
       provideZonelessChangeDetection(),
       provideRouter(routes, withComponentInputBinding()),
-      provideHttpClient(withInterceptors([apiInterceptor])),
+      provideHttpClient(withFetch(), withInterceptors([apiInterceptor])),
       provideAppInitializer(() =>
         inject(SessionService).connect(loadAuthPortalSession(inject(Injector))),
       ),

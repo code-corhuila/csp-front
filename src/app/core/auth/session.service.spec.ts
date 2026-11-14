@@ -1,16 +1,31 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { DEV_TOKEN_ALLOWED, PortalSession, SessionService } from './session.service';
+import { DEV_TOKEN_ALLOWED, PortalSession, RESTORE_TIMEOUT_MS, SessionService } from './session.service';
 
 class FakePortalSession implements PortalSession {
   private readonly open = signal(false);
   readonly isAuthenticated = this.open.asReadonly();
   private roles: string[] = [];
-  readonly end = jasmine.createSpy('end').and.callFake(() => this.open.set(false));
+  private token: string | null = null;
+  restore?: () => Promise<void>;
+  signOut?: () => Promise<void>;
+  readonly end = jasmine.createSpy('end').and.callFake(() => {
+    this.token = null;
+    this.open.set(false);
+  });
 
   start(...roles: string[]): void {
     this.roles = roles;
     this.open.set(true);
+  }
+
+  signIn(token: string): void {
+    this.token = token;
+    this.start();
+  }
+
+  accessToken(): string | null {
+    return this.token;
   }
 
   hasRole(role: string): boolean {
@@ -53,6 +68,38 @@ describe('SessionService', () => {
     expect(session.isAuthenticated()).toBeFalse();
 
     portal.start();
+
+    expect(session.isAuthenticated()).toBeTrue();
+    expect(session.token()).toBeNull();
+  });
+
+  it('takes the token from the auth portal session', async () => {
+    const portal = new FakePortalSession();
+    const session = TestBed.inject(SessionService);
+    await session.connect(() => Promise.resolve(portal));
+
+    expect(session.token()).toBeNull();
+
+    portal.signIn('portal-token');
+
+    expect(session.token()).toBe('portal-token');
+  });
+
+  it('prefers the development token over the one of the auth portal', async () => {
+    const portal = new FakePortalSession();
+    const session = TestBed.inject(SessionService);
+    await session.connect(() => Promise.resolve(portal));
+    portal.signIn('portal-token');
+
+    session.set('dev-token');
+
+    expect(session.token()).toBe('dev-token');
+  });
+
+  it('has no token when the auth portal predates the access token', async () => {
+    const session = TestBed.inject(SessionService);
+    const legacy: PortalSession = { isAuthenticated: () => true, hasRole: () => true, end: () => undefined };
+    await session.connect(() => Promise.resolve(legacy));
 
     expect(session.isAuthenticated()).toBeTrue();
     expect(session.token()).toBeNull();
@@ -140,6 +187,17 @@ describe('SessionService', () => {
       expect(sessionStorage.getItem('csp.session.token')).toBeNull();
     });
 
+    it('takes the token from the auth portal session alone', async () => {
+      const portal = new FakePortalSession();
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+      session.set('written-by-hand');
+
+      portal.signIn('portal-token');
+
+      expect(session.token()).toBe('portal-token');
+    });
+
     it('still follows the session of the auth portal', async () => {
       const portal = new FakePortalSession();
       const session = TestBed.inject(SessionService);
@@ -149,6 +207,150 @@ describe('SessionService', () => {
 
       expect(session.isAuthenticated()).toBeTrue();
       expect(session.hasRole('ADMIN')).toBeTrue();
+    });
+  });
+
+  describe('restoring the session of a reloaded page', () => {
+    it('waits for the restore of the auth portal before connect resolves', async () => {
+      const portal = new FakePortalSession();
+      let finish!: () => void;
+      portal.restore = () => new Promise<void>((resolve) => (finish = resolve));
+      let connected = false;
+
+      const pending = TestBed.inject(SessionService)
+        .connect(() => Promise.resolve(portal))
+        .then(() => (connected = true));
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(connected).toBeFalse();
+
+      finish();
+      await pending;
+
+      expect(connected).toBeTrue();
+    });
+
+    it('has the session the portal restored once connect resolves', async () => {
+      const portal = new FakePortalSession();
+      portal.restore = () => {
+        portal.start('ADMIN');
+        return Promise.resolve();
+      };
+      const session = TestBed.inject(SessionService);
+
+      await session.connect(() => Promise.resolve(portal));
+
+      expect(session.isAuthenticated()).toBeTrue();
+      expect(session.hasRole('ADMIN')).toBeTrue();
+    });
+
+    it('connects a portal that predates restore without waiting', async () => {
+      const session = TestBed.inject(SessionService);
+      const legacy: PortalSession = { isAuthenticated: () => false, hasRole: () => false, end: () => undefined };
+
+      await session.connect(() => Promise.resolve(legacy));
+
+      expect(session.isAuthenticated()).toBeFalse();
+    });
+
+    it('starts without session when the restore rejects', async () => {
+      spyOn(console, 'error');
+      const portal = new FakePortalSession();
+      portal.restore = () => Promise.reject(new Error('boom'));
+      const session = TestBed.inject(SessionService);
+
+      await session.connect(() => Promise.resolve(portal));
+
+      expect(console.error).toHaveBeenCalled();
+      expect(session.isAuthenticated()).toBeFalse();
+    });
+
+    it('starts without session when the restore takes longer than the limit', async () => {
+      jasmine.clock().install();
+      try {
+        spyOn(console, 'error');
+        const portal = new FakePortalSession();
+        portal.restore = () => new Promise<void>(() => undefined);
+        const pending = TestBed.inject(SessionService).connect(() => Promise.resolve(portal));
+        await Promise.resolve();
+        await Promise.resolve();
+
+        jasmine.clock().tick(RESTORE_TIMEOUT_MS);
+        await pending;
+
+        expect(console.error).toHaveBeenCalled();
+        expect(TestBed.inject(SessionService).isAuthenticated()).toBeFalse();
+      } finally {
+        jasmine.clock().uninstall();
+      }
+    });
+
+    it('does not wait for a restore when the remote cannot be loaded', async () => {
+      spyOn(console, 'error');
+
+      await TestBed.inject(SessionService).connect(() => Promise.reject(new Error('down')));
+
+      expect(console.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('explicit sign out', () => {
+    it('asks the portal to close the session and then clears everything', async () => {
+      const portal = new FakePortalSession();
+      portal.signOut = jasmine.createSpy('signOut').and.callFake(() => {
+        expect(session.token()).toBe('dev-token');
+        return Promise.resolve();
+      });
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+      portal.start();
+      session.set('dev-token');
+
+      await session.signOut();
+
+      expect(portal.signOut).toHaveBeenCalled();
+      expect(session.token()).toBeNull();
+      expect(session.isAuthenticated()).toBeFalse();
+      expect(portal.end).toHaveBeenCalled();
+    });
+
+    it('ends the session even when the portal sign out rejects', async () => {
+      spyOn(console, 'error');
+      const portal = new FakePortalSession();
+      portal.signOut = () => Promise.reject(new Error('offline'));
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+      portal.start();
+
+      await session.signOut();
+
+      expect(console.error).toHaveBeenCalled();
+      expect(session.isAuthenticated()).toBeFalse();
+    });
+
+    it('falls back to clear for a portal that predates signOut', async () => {
+      const portal = new FakePortalSession();
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+      portal.start();
+
+      await session.signOut();
+
+      expect(portal.end).toHaveBeenCalled();
+      expect(session.isAuthenticated()).toBeFalse();
+    });
+
+    it('does not call the portal signOut on clear', async () => {
+      const portal = new FakePortalSession();
+      portal.signOut = jasmine.createSpy('signOut').and.returnValue(Promise.resolve());
+      const session = TestBed.inject(SessionService);
+      await session.connect(() => Promise.resolve(portal));
+
+      session.clear();
+
+      expect(portal.signOut).not.toHaveBeenCalled();
+      expect(portal.end).toHaveBeenCalled();
     });
   });
 });

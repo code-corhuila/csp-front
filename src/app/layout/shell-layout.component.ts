@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, effect, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SessionService } from '../core/auth/session.service';
 
 @Component({
@@ -11,25 +11,26 @@ import { SessionService } from '../core/auth/session.service';
         <img src="assets/logos/icon-csp.svg" alt="" width="38" height="38" />
         <span>Cine<strong>Sync</strong></span>
       </a>
-      <nav aria-label="Main">
-        <a routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">Movies</a>
-        <a routerLink="/auth" routerLinkActive="active" ariaCurrentWhenActive="page">Account</a>
-        <a routerLink="/booking" routerLinkActive="active" ariaCurrentWhenActive="page">Booking</a>
-        <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">My tickets</a>
+      <nav aria-label="Principal">
+        <a routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">Películas</a>
+        <a routerLink="/booking" routerLinkActive="active" ariaCurrentWhenActive="page">Reservas</a>
+        <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">Mis boletas</a>
         @if (session.isAuthenticated()) {
-          <a routerLink="/booking/snack-selection" routerLinkActive="active" ariaCurrentWhenActive="page">Snacks</a>
+          <a routerLink="/booking/snack-selection" routerLinkActive="active" ariaCurrentWhenActive="page">Confitería</a>
+          <a routerLink="/profile" routerLinkActive="active" ariaCurrentWhenActive="page">Mi perfil</a>
         }
         @if (session.hasRole('ADMIN')) {
-          <a routerLink="/admin/concessions" routerLinkActive="active" ariaCurrentWhenActive="page">Concessions</a>
-          <a routerLink="/admin/reservations" routerLinkActive="active" ariaCurrentWhenActive="page">Reservations</a>
-          <a routerLink="/admin/billboard" routerLinkActive="active" ariaCurrentWhenActive="page">Billboard</a>
-          <a routerLink="/admin/movies" routerLinkActive="active" ariaCurrentWhenActive="page">Admin movies</a>
-          <a routerLink="/admin/rooms" routerLinkActive="active" ariaCurrentWhenActive="page">Rooms</a>
+          <a routerLink="/admin/concessions" routerLinkActive="active" ariaCurrentWhenActive="page">Concesiones</a>
+          <a routerLink="/admin/reservations" routerLinkActive="active" ariaCurrentWhenActive="page">Todas las reservas</a>
+          <a routerLink="/admin/users" routerLinkActive="active" ariaCurrentWhenActive="page">Roles de usuarios</a>
+          <a routerLink="/admin/billboard" routerLinkActive="active" ariaCurrentWhenActive="page">Cartelera</a>
+          <a routerLink="/admin/movies" routerLinkActive="active" ariaCurrentWhenActive="page">Administrar películas</a>
+          <a routerLink="/admin/rooms" routerLinkActive="active" ariaCurrentWhenActive="page">Salas</a>
         }
       </nav>
       <div class="actions">
         @if (session.isAuthenticated()) {
-          <button type="button" class="btn-secondary" (click)="session.clear()">Sign out</button>
+          <button type="button" class="btn-secondary" (click)="signOut()">Cerrar sesión</button>
         } @else {
           <a routerLink="/auth/login" class="btn-secondary">Iniciar sesión</a>
           <a routerLink="/auth/register" class="btn-primary">Registrarse</a>
@@ -140,4 +141,37 @@ import { SessionService } from '../core/auth/session.service';
 })
 export class ShellLayoutComponent {
   readonly session = inject(SessionService);
+  private readonly router = inject(Router);
+  private signingOut = false;
+
+  constructor() {
+    let wasAuthenticated = this.session.isAuthenticated();
+    effect(() => {
+      const authenticated = this.session.isAuthenticated();
+      if (wasAuthenticated && !authenticated) {
+        this.leaveAfterSessionEnd();
+      }
+      wasAuthenticated = authenticated;
+    });
+  }
+
+  /** The explicit sign out leaves for the start page. */
+  async signOut(): Promise<void> {
+    this.signingOut = true;
+    await this.session.signOut();
+    if (this.session.isAuthenticated()) {
+      this.signingOut = false;
+      return;
+    }
+    await this.router.navigateByUrl('/');
+  }
+
+  /** The sign out navigates by itself; any other end of the session must not leave a protected page on screen. */
+  private leaveAfterSessionEnd(): void {
+    if (this.signingOut) {
+      this.signingOut = false;
+      return;
+    }
+    void this.router.navigateByUrl(this.router.url, { onSameUrlNavigation: 'reload' });
+  }
 }

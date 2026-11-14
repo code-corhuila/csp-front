@@ -1,7 +1,7 @@
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { SessionService } from '../auth/session.service';
+import { PortalSession, SessionService } from '../auth/session.service';
 import { RUNTIME_CONFIG } from '../config/runtime-config.token';
 import { ApiError } from './api-error';
 import { apiInterceptor } from './api.interceptor';
@@ -49,6 +49,25 @@ describe('apiInterceptor', () => {
     expect(request.request.headers.get('X-Correlation-Id')).toMatch(/^[0-9a-f-]{36}$/);
   });
 
+  it('sends the access token of the auth portal session, and drops it on a 401', async () => {
+    let accessToken: string | null = 'portal-token';
+    const portal: PortalSession = {
+      isAuthenticated: () => accessToken !== null,
+      hasRole: () => true,
+      end: () => (accessToken = null),
+      accessToken: () => accessToken,
+    };
+    await session.connect(() => Promise.resolve(portal));
+
+    http.get('/api/v1/movies').subscribe({ error: () => undefined });
+    const first = backend.expectOne(MOVIES_URL);
+    expect(first.request.headers.get('Authorization')).toBe('Bearer portal-token');
+    first.flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    http.get('/api/v1/movies').subscribe();
+    expect(backend.expectOne(MOVIES_URL).request.headers.has('Authorization')).toBeFalse();
+  });
+
   it('omits Authorization without a session and uses a new correlation id per request', () => {
     http.get('/api/v1/movies').subscribe();
     http.get('/api/v1/movies').subscribe();
@@ -71,7 +90,7 @@ describe('apiInterceptor', () => {
     expect(error?.status).toBe(400);
     expect(error?.code).toBe('VALIDATION_ERROR');
     expect(error?.details).toEqual([{ field: 'title', message: 'Required' }]);
-    expect(error?.userMessage).toContain('not valid');
+    expect(error?.userMessage).toContain('no son válidos');
   });
 
   it('closes the session on a 401', () => {
@@ -81,6 +100,19 @@ describe('apiInterceptor', () => {
     backend.expectOne(MOVIES_URL).flush(null, { status: 401, statusText: 'Unauthorized' });
 
     expect(session.token()).toBeNull();
+  });
+
+  it('ends the portal session on a 401 without asking the server to close it', async () => {
+    const end = jasmine.createSpy('end');
+    const signOut = jasmine.createSpy('signOut');
+    await session.connect(() =>
+      Promise.resolve({ isAuthenticated: () => true, hasRole: () => true, end, signOut }));
+
+    http.get('/api/v1/movies').subscribe({ error: () => undefined });
+    backend.expectOne(MOVIES_URL).flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    expect(end).toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
   });
 
   it('keeps the session on other failures', () => {
@@ -105,7 +137,7 @@ describe('apiInterceptor', () => {
 
       expect(error?.status).toBe(0);
       expect(error?.code).toBe('TIMEOUT');
-      expect(error?.userMessage).toContain('took too long');
+      expect(error?.userMessage).toContain('tardó demasiado');
     });
   });
 });

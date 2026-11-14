@@ -20,3 +20,14 @@ export const roleGuard =
     }
     return inject(SessionService).hasRole(role) || inject(Router).createUrlTree(['/']);
   };
+
+/** The pages of the auth portal that only make sense without a session. The recovery and reset pages are not here: their link must work for anyone. */
+const GUEST_ONLY_PATHS = ['/auth', '/auth/login', '/auth/register'];
+
+/** A signed-in person who opens the login or the register page goes to the start address instead of seeing the form again. */
+export const guestGuard: CanActivateFn = (_route, state) => {
+  const path = state.url.split(/[?#]/)[0].replace(/\/$/, '') || '/';
+  return !GUEST_ONLY_PATHS.includes(path) ||
+    !inject(SessionService).isAuthenticated() ||
+    inject(Router).createUrlTree(['/']);
+};

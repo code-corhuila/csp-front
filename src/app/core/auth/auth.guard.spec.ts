@@ -7,7 +7,7 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
-import { authGuard, roleGuard } from './auth.guard';
+import { authGuard, guestGuard, roleGuard } from './auth.guard';
 import { SessionService } from './session.service';
 
 describe('authGuard', () => {
@@ -75,6 +75,70 @@ describe('authGuard', () => {
 
       expect(TestBed.inject(Router).serializeUrl(result as UrlTree))
         .toBe('/auth/login?returnUrl=%2Fbooking%2Fcheckout');
+    });
+  });
+
+  describe('after the session restore of a reloaded page', () => {
+    const portalRestoring = (signedIn: boolean) => {
+      const open = signal(false);
+      return {
+        isAuthenticated: open,
+        end: () => open.set(false),
+        hasRole: (role: string) => open() && role === 'ADMIN',
+        restore: () => {
+          open.set(signedIn);
+          return Promise.resolve();
+        },
+      };
+    };
+    const runRole = () =>
+      TestBed.runInInjectionContext(() => roleGuard('ADMIN')({} as ActivatedRouteSnapshot, { url: '/admin/users' } as RouterStateSnapshot));
+
+    it('keeps the person on the protected route when the restore found a session', async () => {
+      await TestBed.inject(SessionService).connect(() => Promise.resolve(portalRestoring(true)));
+
+      expect(runRole()).toBeTrue();
+    });
+
+    it('sends the person to the auth login when the restore found no session', async () => {
+      await TestBed.inject(SessionService).connect(() => Promise.resolve(portalRestoring(false)));
+
+      expect(TestBed.inject(Router).serializeUrl(runRole() as UrlTree))
+        .toBe('/auth/login?returnUrl=%2Fadmin%2Fusers');
+    });
+  });
+});
+
+describe('guestGuard', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+  afterEach(() => sessionStorage.clear());
+
+  const run = (url: string) =>
+    TestBed.runInInjectionContext(() => guestGuard({} as ActivatedRouteSnapshot, { url } as RouterStateSnapshot));
+
+  ['/auth', '/auth/', '/auth/login', '/auth/register', '/auth/login?returnUrl=%2Fbooking'].forEach((url) => {
+    it(`sends a signed-in person from ${url} to the start address`, () => {
+      TestBed.inject(SessionService).set('abc');
+
+      const result = run(url);
+
+      expect(result instanceof UrlTree).toBeTrue();
+      expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/');
+    });
+
+    it(`lets a visitor into ${url}`, () => {
+      expect(run(url)).toBeTrue();
+    });
+  });
+
+  ['/auth/forgot-password', '/auth/reset-password?token=abc', '/auth/profile'].forEach((url) => {
+    it(`keeps ${url} reachable for a signed-in person`, () => {
+      TestBed.inject(SessionService).set('abc');
+
+      expect(run(url)).toBeTrue();
     });
   });
 });
